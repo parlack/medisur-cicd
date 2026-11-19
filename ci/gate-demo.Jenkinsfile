@@ -71,7 +71,7 @@ exit "$status"
         }
         stage('SonarQube demo analysis') {
             steps {
-                withSonarQubeEnv('SonarQube', credentialsId: 'sonar-demo-token') {
+                withSonarQubeEnv(installationName: 'SonarQube', credentialsId: 'sonar-demo-token') {
                     sh '''#!/usr/bin/env bash
 set -Eeuo pipefail
 set +x

@@ -6,7 +6,7 @@ import urllib.request
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
-parser.add_argument('action', choices=['status', 'build', 'console', 'plugins', 'install-github', 'lint'])
+parser.add_argument('action', choices=['status', 'build', 'console', 'plugins', 'install-github', 'lint', 'tests'])
 parser.add_argument('--job', default='medisur-main')
 parser.add_argument('--build', default='lastBuild')
 parser.add_argument('--lines', type=int, default=65)
@@ -32,6 +32,8 @@ elif args.action == 'console':
 elif args.action == 'plugins':
     data = json.loads(call('/pluginManager/api/json?tree=plugins[shortName,version,active]'))
     print(json.dumps([p for p in data['plugins'] if p['shortName'] in ['github', 'junit', 'sonar', 'workflow-job']], indent=2))
+elif args.action == 'tests':
+    print(call(f'/job/{args.job}/{args.build}/testReport/api/json?tree=failCount,skipCount,totalCount,passCount'))
 elif args.action == 'install-github':
     call('/pluginManager/installNecessaryPlugins', data=b'<jenkins><install plugin="github@1.47.0" /></jenkins>', content_type='text/xml')
     print('GitHub plugin installation requested')
