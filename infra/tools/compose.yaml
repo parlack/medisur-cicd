@@ -8,7 +8,7 @@ x-logging: &logging
 
 services:
   jenkins:
-    image: medisur/jenkins:2.528.3-jdk21-tools1
+    image: medisur/jenkins:security-verified-20261119
     build:
       context: ./jenkins
       args:

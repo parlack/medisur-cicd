@@ -85,8 +85,11 @@ def configure_jenkins():
         ('username', 'ghcr', 'SergioMultimedios', secret('github-token')),
         ('text', 'sonar-token', '', secret('sonar-token')),
         ('text', 'sonarqube-webhook-secret', '', secret('sonarqube-webhook-secret')),
-        ('file', 'medisur-kubeconfig', 'kubeconfig', secret('deployer-kubeconfig')),
     ]
+    if (SECRET_DIR / 'deployer-kubeconfig').is_file():
+        credentials.append(('file', 'medisur-kubeconfig', 'kubeconfig', secret('deployer-kubeconfig')))
+    else:
+        print('Deployment credential is pending; CI can run but deployment will remain blocked.')
     # Values travel in an authenticated loopback request, never process argv/logs.
     payload = base64.b64encode(json.dumps(credentials).encode()).decode()
     script = '''

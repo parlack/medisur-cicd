@@ -9,6 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('action', choices=['status', 'build', 'console', 'plugins', 'install-github', 'lint'])
 parser.add_argument('--job', default='medisur-main')
 parser.add_argument('--build', default='lastBuild')
+parser.add_argument('--lines', type=int, default=65)
 args = parser.parse_args()
 token = Path('/etc/medisur/secrets/jenkins_api_token').read_text().strip()
 authorization = 'Basic ' + base64.b64encode(('medisur-admin:' + token).encode()).decode()
@@ -27,7 +28,7 @@ elif args.action == 'build':
     call(f'/job/{args.job}/build', data=b'')
     print('Bootstrap build queued')
 elif args.action == 'console':
-    print(call(f'/job/{args.job}/{args.build}/consoleText')[-18000:])
+    print('\n'.join(call(f'/job/{args.job}/{args.build}/consoleText').splitlines()[-args.lines:]))
 elif args.action == 'plugins':
     data = json.loads(call('/pluginManager/api/json?tree=plugins[shortName,version,active]'))
     print(json.dumps([p for p in data['plugins'] if p['shortName'] in ['github', 'junit', 'sonar', 'workflow-job']], indent=2))

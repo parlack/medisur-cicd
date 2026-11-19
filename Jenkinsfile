@@ -32,8 +32,8 @@ pipeline {
             steps {
                 // Prevent stale reports/SCM files from passing a later build.
                 deleteDir()
-                checkout scm
                 script {
+                    def checkoutResult = checkout scm
                     env.FULL_SHA = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
                     if (!(env.FULL_SHA ==~ /[0-9a-f]{40}/)) {
                         error('Expected a full 40-character Git commit SHA')
@@ -45,8 +45,9 @@ pipeline {
                     env.APP_IMAGE = "ghcr.io/${params.GHCR_OWNER}/medisur-cicd:${env.APP_VERSION}"
                     env.BUILD_DATE_UTC = sh(script: 'date -u +%Y-%m-%dT%H:%M:%SZ', returnStdout: true).trim()
                     // The single-branch job must explicitly configure */main.
-                    def branchName = env.BRANCH_NAME ?: (env.GIT_BRANCH ?: '')
+                    def branchName = env.BRANCH_NAME ?: (checkoutResult.GIT_BRANCH ?: '')
                     env.IS_MAIN = (!env.CHANGE_ID && branchName in ['main', 'origin/main', 'refs/heads/main']) ? 'true' : 'false'
+                    echo "SCM branch=${branchName}; publish and deploy=${env.IS_MAIN}"
                     env.TEST_IMAGE = "medisur-ci-test:${env.BUILD_NUMBER}-${env.FULL_SHA.take(12)}"
                 }
                 sh '''#!/usr/bin/env bash

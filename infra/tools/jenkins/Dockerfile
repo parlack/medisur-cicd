@@ -1,5 +1,5 @@
 FROM docker:28.5.2-cli@sha256:625d9431a9f54c5a2bc90f24f0e1c3d55b1349fd857dd85035f98c2c9acbdd4d AS dockercli
-FROM jenkins/jenkins:2.528.3-lts-jdk21@sha256:1e407df1a9bcb122cc4d71d4ce44d2e3b2be31af004c157453a939f13ae691c7
+FROM jenkins/jenkins:2.580.2-lts-jdk21@sha256:74401de6a6f92e1afe1b02d1c8e3d0c33f263bfb5275dd8813f9150355f2367b
 
 USER root
 RUN apt-get update \
@@ -27,9 +27,38 @@ RUN curl -fsSL --retry 3 "https://binaries.sonarsource.com/Distribution/sonar-sc
 
 USER jenkins
 COPY --chown=jenkins:jenkins plugins.txt /usr/share/jenkins/ref/plugins.txt
-# Plugin Installation Manager resolves transitive dependencies and rejects core
-# incompatibilities. Direct versions are pinned; --latest=false uses minimum
-# required dependencies, not the moving newest versions of every dependency.
-RUN jenkins-plugin-cli --jenkins-version 2.528.3 --latest=false --plugin-file /usr/share/jenkins/ref/plugins.txt
+# Pin the full dependency closure, not just direct plugins. Reject missing pins,
+# resolver drift, incompatible core requirements, and published security warnings.
+RUN jenkins-plugin-cli --jenkins-version 2.580.2 --latest=false \
+        --plugin-file /usr/share/jenkins/ref/plugins.txt \
+    && for archive in /usr/share/jenkins/ref/plugins/*.jpi; do \
+        unzip -p "$archive" META-INF/MANIFEST.MF | tr -d '\r' \
+        | awk '/^Short-Name: / {name=$2} /^Plugin-Version: / {version=$2} END {print name ":" version}'; \
+       done | LC_ALL=C sort > /tmp/plugins.resolved.txt \
+    && awk '{sub(/\r$/, "")} NF && $0 !~ /^#/' /usr/share/jenkins/ref/plugins.txt \
+        | LC_ALL=C sort > /tmp/plugins.expected.txt \
+    && diff -u /tmp/plugins.expected.txt /tmp/plugins.resolved.txt \
+    && cp /tmp/plugins.resolved.txt /usr/share/jenkins/ref/plugins.resolved.txt
+RUN curl -fsSL --retry 3 https://updates.jenkins.io/stable/update-center.actual.json \
+        -o /tmp/update-center.security.json \
+    && jq -e --rawfile lock /usr/share/jenkins/ref/plugins.resolved.txt \
+        --arg core 2.580.2 '\
+        if (.warnings | type) != "array" then error("Missing advisory metadata") else . end \
+        | ($lock | split("\n") | map(select(length > 0) | split(":") \
+            | {key: .[0], value: .[1]}) | from_entries) as $plugins \
+        | [.warnings[] | . as $warning \
+            | (if .type == "core" then $core else $plugins[.name] end) as $version \
+            | select($version != null) \
+            | select(any(.versions[]; .pattern as $pattern \
+                | $version | test("^(?:" + $pattern + ")$"))) \
+            | {id, name, message, url, version: $version}] as $warnings \
+        | {checked_at: (now | todateiso8601), core: $core, \
+            plugin_count: ($plugins | length), warnings: $warnings} \
+        | if (.warnings | length) == 0 then . else error(tojson) end' \
+        /tmp/update-center.security.json > /usr/share/jenkins/ref/jenkins-security-audit.json \
+    && sha256sum /tmp/update-center.security.json \
+        > /usr/share/jenkins/ref/jenkins-security-metadata.sha256 \
+    && cat /usr/share/jenkins/ref/jenkins-security-audit.json \
+    && rm /tmp/update-center.security.json /tmp/plugins.expected.txt /tmp/plugins.resolved.txt
 RUN docker --version && docker buildx version && docker compose version \
     && kubectl version --client=true && sonar-scanner --version && jq --version

@@ -18,9 +18,7 @@ jenkins:
             name: "${JENKINS_ADMIN_ID}"
             permissions:
               - "Overall/Administer"
-  crumbIssuer:
-    standard:
-      excludeClientIPFromCrumb: false
+  crumbIssuer: standard
 unclassified:
   location:
     url: "${JENKINS_URL}"
