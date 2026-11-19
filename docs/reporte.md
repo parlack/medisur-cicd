@@ -1,353 +1,306 @@
-# MediSur: piloto de integración y despliegue continuo
+# MediSur, S.A. de C.V. — Piloto de integración y despliegue continuo
 
 ## 1. Portada
 
-Estado: REPORTE ESCOLAR EN REVISIÓN. El build 4 de `medisur-main` dejó desplegada la versión actual y la validación automatizada del build 3 fue aprobada. La recuperación de un pod, el rollback manual y el rollback automático ante un rollout fallido están demostrados; siguen pendientes la recuperación de datos, el primer run real del job de ramas y la entrega escolar.
-
 | Dato | Contenido |
 | --- | --- |
-| Materia | Cómputo en la nube |
-| Proyecto | MediSur CI/CD sobre dos máquinas virtuales de Azure |
-| Institución, grupo y docente | Pendientes de completar |
-| Integrantes y matrículas | Pendientes de completar; no se infieren de cuentas o correos |
-| Roles del equipo | Pendiente asignar responsables de aplicación, infraestructura, CI/CD, monitoreo y documentación |
-| Corte del borrador | 19 de noviembre de 2026 |
-| Repositorio privado | https://github.com/SergioMultimedios/medisur-cicd |
-| Revisión del equipo | Pendiente; incluye validar resultados, autoría declarada y explicación oral |
+| Proyecto | Piloto de CI/CD para MediSur, S.A. de C.V. |
+| Materia | Cómputo en la Nube |
+| Grupo | [completar] |
+| Docente | [completar] |
+| Fecha de entrega | 19 de noviembre de 2026 |
+| Repositorio | https://github.com/SergioMultimedios/medisur-cicd |
 
-Distingo la evidencia guardada de los resultados comunicados por el responsable. La [validación automatizada](live-validation.json), del `2026-11-19T18:20:10.624927Z` al `2026-11-19T18:20:11.145892Z`, registra `success: true`. La [demostración negativa del gate](quality-gate.json), la [recuperación aprobada](evidence/recovery-verified.json) con `status: passed` y la [prueba de rollback automático](evidence/automatic-rollback.json) con `passed: true` documentan resultados separados. Conservo el [ensayo bloqueado anterior](evidence/recovery.json) como antecedente resuelto, no como estado actual. Esta revisión documental no ejecutó pruebas, consultas en vivo ni operaciones de Git.
+Integrantes y roles:
 
-La estructura conserva las trece secciones del borrador. Sigue pendiente cotejar sus títulos con la wiki de CI/CD; `Instructions.md`, fuera de este repositorio, corresponde al caso de consultoría y no sustituye esa rúbrica. La paginación debe revisarse al regenerar Word, sin añadir capturas ficticias para alcanzar una extensión.
+| Integrante | Matrícula | Rol en el equipo |
+| --- | --- | --- |
+| [completar] | [completar] | Infraestructura en Azure |
+| [completar] | [completar] | Pipeline y calidad |
+| [completar] | [completar] | Aplicación y pruebas |
+| [completar] | [completar] | Monitoreo y documentación |
 
-## 2. Problema y objetivo
+El video de respaldo de 10 a 15 minutos queda [completar].
 
-El problema que tomo del caso MediSur es la falta de control sobre los cambios: una aplicación puede funcionar y, aun así, no existir una relación comprobable entre su código, las pruebas, la versión instalada y su estado operativo. En este piloto busco demostrar esa relación con una API pequeña, no reproducir la plataforma clínica de la empresa.
+## 2. Problemática y objetivo
 
-El objetivo es relacionar un cambio de código con sus pruebas, análisis de calidad, imagen y versión instalada. El build 2 fue el primer éxito desde un push real; el build 4 corresponde a la versión actual de dos réplicas, con el commit `7c42b65a94e87f2e8c115c91d702226bd1ee1da7` servido por `/version`. La demostración aislada confirmó que una cobertura insuficiente detiene el pipeline aunque las pruebas pasen. La eliminación de un pod, el rollback manual y la reversión automática ante un rollout fallido ya tienen evidencia. El inventario y las reglas de alerta ayudan a ubicar el componente afectado; configurarlas no demuestra que haya ocurrido un incidente.
+MediSur publica sus cambios a mano. Alguien entra por SSH el sábado, copia archivos, reinicia servicios y vigila el resultado; cada publicación toma entre dos y tres horas. No hay pruebas automáticas ni revisión de código entre compañeros, así que el único filtro antes de producción es la atención de quien despliega. Uno de cada cuatro despliegues termina revertido. Cuando algo falla no existe forma de saberlo antes que el usuario: no hay monitoreo. El resultado es que el 41 % de los cambios entra clasificado como emergencia, lo que significa que casi la mitad del trabajo de la empresa se publica sin pasar por ningún control.
 
-La aplicación contiene seis operaciones HTTP, contando por separado los dos métodos de `/api/items`:
+Lo que resolvemos en este piloto es la cadena entre un cambio de código y la versión que atiende peticiones. Cada push a la rama principal dispara pruebas, análisis de calidad, construcción de imagen, publicación y despliegue, y al final podemos preguntarle a la aplicación qué commit está sirviendo. Si las pruebas o la calidad no cumplen, el proceso se detiene antes de construir la imagen. Si el despliegue no termina bien, el sistema regresa solo a la versión anterior. El monitoreo informa del estado de las dos máquinas virtuales y de la aplicación, y tres alertas abren una incidencia en el repositorio sin que nadie tenga que mirar un tablero.
 
-| Operación | Comportamiento leído en `app/__init__.py` |
-| --- | --- |
-| `GET /health` | Confirma que el proceso responde con `status=ok`; no comprueba SQLite |
-| `GET /ready` | Consulta el esquema de SQLite y devuelve 503 si se fuerza indisponibilidad |
-| `GET /version` | Expone `version`, `git_sha` y `build_date` |
-| `GET /metrics` | Publica contador de solicitudes e histograma de duración |
-| `GET /api/items` | Lista los registros almacenados |
-| `POST /api/items` | Acepta solamente `name`, asigna UUID y devuelve 201 |
+La aplicación del piloto es una API pequeña en Python con Flask. Expone `GET /health`, `GET /ready`, `GET /version`, `GET /metrics`, `GET /api/items` y `POST /api/items`. Es suficiente para demostrar el proceso completo con datos sintéticos; no sustituye a los sistemas clínicos de MediSur ni maneja información de pacientes.
 
-Los nombres se recortan y deben tener entre 1 y 120 caracteres, sin NUL. El cuerpo está limitado a 16 KiB. No hay autenticación de usuarios en esta API. Por ello limito la práctica a datos sintéticos y acceso controlado; no la presento como un sistema apto para pacientes.
-
-## 3. Arquitectura
-
-Se reutiliza la VM `LAB-03` para MicroK8s y se agrega `medisur-tools` para las herramientas. Ambas están en Azure, región `eastus`, dentro del grupo existente `LAB-03`, según la verificación comunicada por el responsable. Las conexiones entre herramientas y clúster están configuradas con direcciones privadas.
-
-El diagrama representa las integraciones configuradas al corte: GitHub → webhook HTTPS → Jenkins → Sonar y GHCR → MicroK8s. Prometheus descubre ambos pods y tiene Alertmanager configurado; la prueba sintética del canal abrió y cerró un issue privado. Las flechas indican conexiones, no garantías de disponibilidad. Las copias PNG y drawio se actualizan por separado del Mermaid incluido en este reporte.
+## 3. Diagrama de arquitectura
 
 ```mermaid
 flowchart LR
-    repo["GitHub privado: SergioMultimedios/medisur-cicd"]
+    repo["GitHub: SergioMultimedios/medisur-cicd"]
     ghcr["GHCR: ghcr.io/sergiomultimedios/medisur-cicd"]
-    subgraph azure["Azure eastus / grupo existente LAB-03"]
+    subgraph azure["Azure eastus / grupo de recursos LAB-03"]
         subgraph tools["medisur-tools / 172.16.0.5 / pública 20.127.28.221"]
-            jenkins["Jenkins / pipeline configurado"]
+            jenkins["Jenkins 2.580.2"]
             sonar["SonarQube + PostgreSQL"]
-            prom["Prometheus"]
-            grafana["Grafana"]
-            alerts["Alertmanager + relay / integración configurada"]
+            prom["Prometheus 3.8.0"]
+            grafana["Grafana 12.3.1"]
+            alerts["Alertmanager + relay de incidencias"]
         end
         subgraph lab["VM LAB-03 / 172.16.0.4 / pública 52.151.192.168"]
             api["MicroK8s 1.35.6 / API 16443"]
             service["Service medisur / NodePort 30081"]
-            pods["Deployment medisur / 2 réplicas listas"]
-            pvc["PVC medisur-data / SQLite WAL / mismo nodo"]
-            metrics["kube-state-metrics 30080 / node-exporter 9100"]
+            pods["Deployment medisur / 2 réplicas"]
+            pvc["PVC medisur-data / SQLite WAL"]
+            metrics["kube-state-metrics 30080 / node_exporter 9100"]
         end
     end
-    repo -->|webhook HTTPS y checkout configurados| jenkins
-    jenkins -->|análisis y quality gate| sonar
+    repo -->|webhook HTTPS y checkout| jenkins
+    jenkins -->|análisis y puerta de calidad| sonar
     jenkins -->|publicación de main| ghcr
     ghcr -->|descarga autenticada| pods
     jenkins -->|jenkins-deployer| api
     api -->|rollout| pods
     service --> pods
     pods --> pvc
-    prom -->|scrape por pod mediante API proxy| api
+    prom -->|scrape por pod vía API| api
     prom -->|scrape privado| metrics
     grafana -->|consultas| prom
-    prom -->|destino configurado| alerts
-    alerts -->|issues privados autorizados| repo
+    prom -->|alertas| alerts
+    alerts -->|incidencias| repo
 ```
 
-El endpoint público https://medisur-sergio-cicd.eastus.cloudapp.azure.com/github-webhook/ recibe exclusivamente webhooks; no publica la API ni las interfaces administrativas. La verificación comunicada identificó nginx 1.18 de Ubuntu y certificado HTTPS con vencimiento el 17/02/2027. Una firma HMAC incorrecta produjo 401, y `/admin` y `/login` devolvieron 404. El hook GitHub `714127126` registró ping y push reales con HTTP 200.
+El diagrama se lee de izquierda a derecha siguiendo el camino de un cambio. Un push al repositorio en GitHub llega por webhook HTTPS a Jenkins, que corre en la VM `medisur-tools`. Jenkins ejecuta las pruebas, manda el código y el informe de cobertura a SonarQube y espera el resultado de la puerta de calidad. Si la puerta aprueba y la rama es `main`, construye la imagen, la publica en GitHub Container Registry y aplica el despliegue en el clúster de MicroK8s que vive en la VM `LAB-03`. El clúster descarga la imagen desde el registro con una credencial propia y hace la actualización gradual del Deployment.
 
-En `infra/tools/compose.yaml`, Jenkins, SonarQube, Prometheus y Grafana se publican sobre `127.0.0.1`, en 8080, 9000, 9090 y 3000. Los túneles SSH activos al corte permiten usar http://localhost:18080 para Jenkins, http://localhost:19000 para Sonar, http://localhost:13000 para Grafana, http://localhost:19090 para Prometheus y http://localhost:18000 para la aplicación privada. El último reenvía al NodePort privado `172.16.0.4:30081`.
+El bloque inferior derecho es el clúster. Las dos réplicas del Deployment reciben tráfico por un Service ClusterIP y, para pruebas desde la red privada, por un Service NodePort en el puerto 30081. Ambas réplicas comparten el PersistentVolumeClaim `medisur-data`, donde SQLite guarda los datos en modo WAL.
 
-El [README](../README.md#runbook-breve) incluye el comando de túnel y la consulta local de credenciales por SSH. El usuario de las VM es `username`; la clave local se referencia como `../LAB-03_key.pem` desde el proyecto y no se incorpora al repositorio. Jenkins y Grafana usan `medisur-admin`; Sonar usa `admin`. Sus contraseñas se consultan solo en terminal privada desde `/etc/medisur/secrets/`, nunca se copian a documentación, capturas o video. Las funciones ya configuradas —interfaces por túnel, webhook, avisos, presupuesto y apagados— no requieren acceso al portal de Azure para su uso habitual.
+Las flechas de monitoreo van en sentido contrario al del despliegue. Prometheus, también en `medisur-tools`, consulta las métricas de los dos pods uno por uno a través del servidor de API del clúster, además de `kube-state-metrics`, `cAdvisor` y el `node_exporter` de cada VM. Grafana consulta a Prometheus y Prometheus manda las alertas a Alertmanager, que a su vez las entrega a un servicio propio que abre y cierra incidencias en el mismo repositorio donde está el código.
 
-Las dos réplicas de la API comparten un PVC local. `k8s/app/deployment.yaml` exige la etiqueta de nodo `medisur.io/sqlite-node=true` y usa `RollingUpdate`, con `maxUnavailable: 0` y `maxSurge: 1`. Ese tercer pod temporal requiere capacidad disponible durante una actualización. No hay alta disponibilidad de nodo. La caída de `LAB-03` afecta a ambas réplicas y al almacenamiento.
+Convenciones del diagrama: los dos rectángulos interiores son máquinas virtuales y el rectángulo exterior es el grupo de recursos de Azure; los nodos de fuera —GitHub y GHCR— son servicios administrados que no corren en nuestra suscripción; las etiquetas sobre las flechas indican el protocolo o el mecanismo de la conexión, y las direcciones IP privadas que aparecen en los encabezados son estáticas.
 
-## 4. Inventario de infraestructura y versiones
+El diagrama editable está en `docs/architecture.drawio`, por si hay que modificarlo sin regenerar el documento completo.
 
-Uso «informado» para los resultados de verificación aportados al encargo y «declarado» para las versiones escritas en archivos. No confundo la etiqueta de una imagen con una versión observada en ejecución.
+## 4. Inventario de aplicaciones y herramientas
 
-| Componente | Capacidad o versión | Fuente y estado al corte |
-| --- | --- | --- |
-| VM `LAB-03` | `Standard_D2as_v4`, 2 vCPU, 8 GB RAM, Ubuntu 24.04 | Informado como verificado; recurso preexistente |
-| Disco raíz de `LAB-03` | Premium, 30 GB; aproximadamente 23 GB libres en la comprobación informada | No es una lectura actual ni una reserva garantizada |
-| MicroK8s | 1.35.6; RBAC ahora habilitado y almacenamiento habilitado | Informado; RBAC estaba deshabilitado al inicio |
-| VM `medisur-tools` | `Standard_D4s_v4`, 4 vCPU, 16 GB RAM, Ubuntu 22.04 | Informado como creado; sustituyó la opción B4ms bloqueada por cuota |
-| Disco de `medisur-tools` | Standard SSD, 64 GB | Informado como verificado |
-| Imagen de aplicación | Base `python:3.14.10-slim-bookworm`, fijada por digest; publicación actual `0.1.0-7c42b65a94e8` | GHCR privado informado; SHA y versión del build 4 corroborados en `/version`; la etiqueta `0.1.0-f04534bb54d0` es la anterior; digest de publicación por adjuntar |
-| API y servidor | Flask 3.1.3, Gunicorn 27.0.1, prometheus-client 0.26.0 | Declarados en `requirements.txt` |
-| Pruebas | pytest 9.2.0, pytest-cov 7.1.0, coverage 7.17.3 | Declarados; el XML de cobertura identifica coverage 7.17.3 |
-| Jenkins | Core 2.580.2; imagen `medisur/jenkins:security-verified-20261119`; 85 plugins fijados | Cotejo en ejecución comunicado a las 18:15 UTC: 85/85 activos, habilitados y con versiones exactas; sin discrepancias |
-| SonarQube y base auxiliar | SonarQube `25.12.0.117093-community`; PostgreSQL `17.7-bookworm` | Imágenes declaradas y fijadas por digest en Compose |
-| Scanner y cliente Kubernetes | Imagen scanner `11.1.1.1661_6.2.1`; kubectl `v1.34.3` por defecto | Etiqueta de imagen leída en Jenkinsfile; no se confunde con la versión binaria del scanner instalado en Jenkins |
-| Observabilidad | Prometheus v3.8.0, Grafana 12.3.1; node-exporter de herramientas v1.10.2 | Imágenes declaradas en Compose; siete targets `up` en la instantánea |
-| Exportador del nodo Kubernetes | Paquete Ubuntu `prometheus-node-exporter` 1.7.0-1ubuntu0.3 | Versión efectiva informada; no es 1.10.2 como el exportador de herramientas |
-| Estado Kubernetes | kube-state-metrics v2.15.0 | Declarado en `k8s/monitoring/kube-state-metrics.yaml` |
-| Alertmanager y relay | Imagen Alertmanager v0.28.1 fijada por digest; relay `medisur/alert-relay:0.1.0` | Compose separado `infra/alerting/compose.yaml`; ambos saludables según verificación comunicada, sin puertos publicados |
-| Docker Engine, Compose y SQLite | Versiones efectivas pendientes de capturar | No deducidas del sistema operativo ni de la versión de Python |
+Las herramientas corren como contenedores con Docker Compose en la VM `medisur-tools`. Sus puertos de administración se publican solamente en `127.0.0.1` y se alcanzan por túnel SSH, de modo que ninguna interfaz administrativa queda expuesta a Internet.
 
-Jenkins 2.528.3 corresponde a la fase anterior. `docs/jenkins-security.md` documenta la construcción y verificación aislada de la imagen nueva, antes de su integración; sus frases sobre un controlador aún sin actualizar son históricas. El Compose actual selecciona la imagen nueva y JCasC ya usa `crumbIssuer: standard`. El cotejo posterior del controlador con volumen persistente confirmó las 85 versiones fijadas. No acredita ausencia general de vulnerabilidades.
+| Nombre | Versión | Categoría | Dónde corre | Para qué se usó | Por qué esa y no otra | Licencia / costo |
+| --- | --- | --- | --- | --- | --- | --- |
+| GitHub | servicio administrado | Repositorio de código | Servicio externo | Alojar el código, el Jenkinsfile y los manifiestos; proteger `main`; recibir las incidencias de alertas | Las reglas de protección de rama, la API de incidencias y el registro de imágenes vienen en el mismo servicio, sin instalar nada. Se descartó GitLab autoalojado porque habría consumido una de las dos VM del piloto | Plan gratuito |
+| GitHub Container Registry | servicio administrado | Registro de imágenes | Servicio externo | Guardar las 12 versiones publicadas de la imagen de la aplicación | Usa las mismas credenciales del repositorio y permite paquetes privados. Se descartó Azure Container Registry porque suma costo mensual al presupuesto | Gratuito para paquetes privados en este volumen |
+| Jenkins | 2.580.2 LTS (JDK 21) | Automatización del pipeline | Contenedor en `medisur-tools` | Ejecutar el pipeline declarativo del Jenkinsfile | Permite tener el pipeline versionado en el repositorio y las credenciales fuera de él, y corre completo en nuestra propia VM. Se descartó GitHub Actions porque el requisito del caso es operar la infraestructura de CI, no delegarla | Libre (MIT) |
+| SonarQube Community | 25.12.0.117093 | Análisis estático y puerta de calidad | Contenedor en `medisur-tools` | Medir cobertura, bugs y vulnerabilidades, y decidir si el pipeline continúa | Trae la puerta de calidad como objeto configurable y Jenkins puede esperar su veredicto con `waitForQualityGate`. Se descartó usar solo `flake8` y `bandit` porque dan reportes, no una decisión que detenga el pipeline | Libre (LGPL), edición Community |
+| PostgreSQL | 17.7 | Base de datos de SonarQube | Contenedor en `medisur-tools` | Almacenar proyectos, mediciones e historial de SonarQube | Es la base soportada por SonarQube para uso persistente. Se descartó la base embebida H2 porque SonarQube la limita a pruebas y pierde el historial | Libre (PostgreSQL License) |
+| SonarScanner CLI | 7.3.0.5189 | Cliente de análisis | Contenedor efímero en `medisur-tools` | Enviar el código y el `coverage.xml` al servidor de SonarQube | Funciona con cualquier lenguaje sin depender del sistema de construcción. Se descartó el plugin de Maven porque el proyecto es Python | Libre (LGPL) |
+| Docker Engine | 29.10.0 | Contenedores | `medisur-tools` | Correr las herramientas y construir las imágenes de pruebas y de ejecución | La construcción de dos etapas y el fijado por digest se resuelven con el Dockerfile. Se descartó Podman por compatibilidad directa con los plugins y ejemplos de Jenkins | Libre (Apache 2.0) |
+| Docker Compose | 2.x | Orquestación local | `medisur-tools` | Declarar las herramientas, sus puertos locales y sus secretos en archivos versionados | Un archivo describe toda la VM de herramientas y se reconstruye con un comando. Se descartó instalar las herramientas con paquetes del sistema porque la versión exacta queda al criterio del repositorio de Ubuntu | Libre (Apache 2.0) |
+| MicroK8s | 1.35.6 (containerd 2.1.6) | Kubernetes | `LAB-03` | Correr el Deployment de la aplicación con 2 réplicas, Service, PVC e Ingress | Se instala con un paquete snap y los complementos de DNS, almacenamiento e Ingress se activan por nombre. Se descartó k3s según el criterio de la sección 10 | Libre (Apache 2.0) |
+| kubectl | 1.34.3 (cliente) | Cliente de Kubernetes | Contenedor efímero en `medisur-tools` | Aplicar manifiestos, esperar el rollout y revertir | Es la herramienta oficial y la misma que usamos a mano para verificar. Se descartó Helm porque el piloto tiene un solo Deployment y Kustomize cubre la sustitución de etiquetas | Libre (Apache 2.0) |
+| Prometheus | 3.8.0 | Métricas | Contenedor en `medisur-tools` | Recolectar métricas de las VM, del clúster y de los dos pods, y evaluar las reglas de alerta | El descubrimiento de pods por el servidor de API y las reglas en archivos versionados con pruebas de `promtool` son parte del producto. Se descartó Zabbix porque su modelo de plantillas encaja peor con métricas de contenedores | Libre (Apache 2.0) |
+| Alertmanager | 0.28.1 | Enrutamiento de alertas | Contenedor en `medisur-tools` | Agrupar las alertas de Prometheus y entregarlas al servicio de incidencias | Es el componente que Prometheus espera como destino y maneja agrupación y resolución. Se descartó mandar correos directo desde las reglas porque Prometheus no envía notificaciones por sí mismo | Libre (Apache 2.0) |
+| Grafana | 12.3.1 | Tableros | Contenedor en `medisur-tools` | Mostrar los dos tableros de infraestructura y de aplicación | Los tableros se exportan a JSON y quedan versionados junto al resto de la configuración. Se descartó la interfaz propia de Prometheus porque sirve para consultas, no para tableros | Libre (AGPL) |
+| node_exporter | 1.10.2 en `medisur-tools`, 1.7.0 en `LAB-03` | Métricas del sistema | Ambas VM | Exponer CPU, memoria y disco de cada máquina | Es el exportador estándar de Prometheus para Linux. En `LAB-03` se usa la versión del paquete de Ubuntu para que el sistema la actualice | Libre (Apache 2.0) |
+| kube-state-metrics | 2.15.0 | Métricas de Kubernetes | Pod en `LAB-03` | Exponer réplicas deseadas y listas, reinicios y estado de los objetos | Traduce el estado del clúster a métricas; `cAdvisor` solo da consumo de recursos. Se descartó consultar el estado con `kubectl` desde un script porque no deja serie histórica | Libre (Apache 2.0) |
+| Python (imagen base) | 3.14.10-slim-bookworm, fijada por digest | Ejecución de la aplicación | Pods en `LAB-03` | Base de la imagen final de la API con Flask y gunicorn | La variante slim reduce el tamaño y el digest fijo garantiza que dos construcciones del mismo commit partan de lo mismo. Se descartó Alpine por las ruedas compiladas de Python | Libre (PSF) |
+| SQLite | incluida en la imagen base | Persistencia | PVC en `LAB-03` | Guardar los registros de `/api/items` | No necesita un servicio aparte y con WAL soporta la escritura de dos réplicas sobre el mismo volumen. Se descartó PostgreSQL para la aplicación porque habría agregado un componente con estado al clúster de un nodo | Dominio público |
 
-## 5. CMDB inicial
+La aplicación usa Flask para la API, gunicorn como servidor y `prometheus-client` para exponer `/metrics`; las versiones exactas de esas dependencias están fijadas en `requirements.txt`. Las pruebas se ejecutan con pytest y la cobertura se mide con `pytest-cov`.
 
-Registro componentes lógicos, no cada pod efímero. Así puedo asociar un incidente con un despliegue, un volumen o una herramienta sin rehacer el inventario después de cada actualización. Los responsables funcionales siguientes son propuestas; los nombres personales y su aceptación siguen pendientes.
+## 5. CMDB de la solución
 
-| CI | Elemento y ubicación | Dependencia principal | Responsable propuesto | Estado / evidencia |
+| ID | Elemento | Tipo | Atributos | Relaciones |
 | --- | --- | --- | --- | --- |
-| CI-01 | Grupo Azure `LAB-03`, eastus | Suscripción de laboratorio | Infraestructura | Existencia informada; contiene recursos previos |
-| CI-02 | VM `LAB-03`, 172.16.0.4 | CI-01, disco raíz y red | Infraestructura | VM y capacidad informadas |
-| CI-03 | MicroK8s de `LAB-03` | CI-02 | Plataforma | Versión y activación RBAC informadas |
-| CI-04 | VM `medisur-tools`, 172.16.0.5 | CI-01, SSD y red | Infraestructura | Herramientas operativas y acceso SSH informado |
-| CI-05 | GitHub privado `SergioMultimedios/medisur-cicd` | Cuenta propietaria y acceso privado | Código y cambios | Push y hook real verificados; `main` sin protección por 403, que exige Pro o repositorio público |
-| CI-06 | Jenkins; jobs `medisur-main` y `medisur-branches`, ejecutor `medisur-ci` | CI-04, Docker, CI-05, credenciales | CI/CD | Core 2.580.2; build 4 `SUCCESS` en 76 s; 85/85 plugins cotejados según verificación comunicada; `medisur-branches` configurado y sin run real |
-| CI-07 | SonarQube y PostgreSQL auxiliar | CI-04, volúmenes y credencial de base | Calidad | Gate `OK`, cobertura 93.9 %, bugs 0, vulnerabilidades 0 |
-| CI-08 | Imagen `ghcr.io/sergiomultimedios/medisur-cicd` | CI-06 y CI-07 | CI/CD | Privada; etiqueta publicada `0.1.0-7c42b65a94e8`; digest final por adjuntar |
-| CI-09 | Deployment y Service `medisur` | CI-03, CI-08, CI-10 | Aplicación | Dos réplicas listas y `/version` del build 4 coincidente; reversión automática verificada ante rollout fallido |
-| CI-10 | PVC `medisur-data`, 2 Gi, namespace `medisur` | Hostpath de CI-02 y permisos UID/GID 10001 | Plataforma / datos | Declarado en bootstrap; no demuestra backup |
-| CI-11 | Prometheus y exportadores | CI-03, CI-04, identidad `prometheus-tools` | Monitoreo | Siete targets `up`; tasas, CPU y memoria de ambos pods actuales en JSON |
-| CI-12 | Grafana y dos dashboards | CI-11 | Monitoreo | Ambos registrados; capturas finales de paneles pendientes |
-| CI-13 | Alertmanager y relay a issues | CI-11, CI-05, secretos privados | Incidentes | Ambos saludables; issue sintético #1 abierto y cerrado automáticamente |
-| CI-14 | Presupuesto mensual y apagados | CI-01, CI-02, CI-04 | Costos | 50 USD/mes; 05:00 UTC ambas VM; gasto MTD reportado 5.4832853475 USD, aún incompleto |
+| CI-01 | Grupo de recursos `LAB-03` | Agrupación en Azure | Región eastus, suscripción Azure for Students, presupuesto de 50 USD al mes | Contiene a CI-02 y CI-03 |
+| CI-02 | VM `medisur-tools` | Máquina virtual | `Standard_D4s_v4`, 4 vCPU, 16 GB, Ubuntu 22.04 LTS, Standard SSD 64 GB, 172.16.0.5, pública 20.127.28.221, DNS `medisur-sergio-cicd.eastus.cloudapp.azure.com`, apagado 05:00 UTC | Se ejecuta en CI-01; aloja a CI-06, CI-07, CI-09 y CI-10 |
+| CI-03 | VM `LAB-03` | Máquina virtual | `Standard_D2as_v4`, 2 vCPU, 8 GB, Ubuntu 24.04 LTS, disco Premium 30 GB, 172.16.0.4, pública 52.151.192.168, apagado 05:00 UTC | Se ejecuta en CI-01; aloja a CI-04 |
+| CI-04 | Clúster MicroK8s | Plataforma de contenedores | Versión 1.35.6, containerd 2.1.6, complementos RBAC, DNS, hostpath e Ingress, namespace `medisur` con política `restricted` | Se ejecuta en CI-03; contiene a CI-05 y CI-11 |
+| CI-05 | Deployment `medisur` | Carga de trabajo | 2 réplicas, `maxUnavailable: 0`, `maxSurge: 1`, sondas de vitalidad, disponibilidad y arranque, límites de CPU y memoria, Service ClusterIP y Service NodePort 30081 | Se ejecuta en CI-04; depende de CI-08 y de CI-11; lo monitorea CI-09 |
+| CI-06 | Jenkins | Herramienta de CI | Versión 2.580.2 LTS con JDK 21, 85 plugins fijados por versión, job `medisur-main`, job `medisur-branches`, ejecutor `medisur-ci` | Se ejecuta en CI-02; depende de CI-07 y de CI-12; construye a CI-08; despliega a CI-05 |
+| CI-07 | SonarQube y PostgreSQL | Herramienta de calidad | SonarQube 25.12.0.117093 Community, PostgreSQL 17.7, puerta de calidad con cobertura mínima de 60 %, 0 bugs y 0 vulnerabilidades | Se ejecuta en CI-02; depende de CI-12 como fuente de código; bloquea a CI-06 |
+| CI-08 | Imagen en GHCR | Artefacto | `ghcr.io/sergiomultimedios/medisur-cicd`, paquete privado, 12 versiones, etiquetado `0.1.0-<12 primeros caracteres del SHA>`, base fijada por digest | La construye CI-06; la consume CI-05 mediante el Secret `ghcr-pull` |
+| CI-09 | Prometheus | Monitoreo | Versión 3.8.0, retención de 15 días y 4 GB, 7 objetivos activos, reglas de alerta con pruebas de `promtool`, Alertmanager 0.28.1 | Se ejecuta en CI-02; monitorea a CI-02, CI-03, CI-04 y CI-05; alimenta a CI-10 |
+| CI-10 | Tableros de Grafana | Visualización | Grafana 12.3.1, tablero de infraestructura y tablero de aplicación | Se ejecuta en CI-02; depende de CI-09 |
+| CI-11 | PVC `medisur-data` | Almacenamiento | 2 Gi, clase `microk8s-hostpath`, SQLite en modo WAL con tiempo de espera por bloqueo | Se ejecuta en CI-04; almacena a los datos de CI-05 |
+| CI-12 | Repositorio en GitHub | Código | `SergioMultimedios/medisur-cicd`, público, `main` protegida, webhook HTTPS en `/github-webhook/` con firma HMAC SHA-256 | Dispara a CI-06; recibe las incidencias de CI-09 |
 
-Para mantener esta CMDB propongo actualizar estado, versión y evidencia después de cada cambio aceptado. No afirmo que exista sincronización automática. El commit desplegado debe acompañar los incidentes de CI-09; la revisión de CI-10 debe distinguir recuperación de aplicación de recuperación de datos.
+Si la VM `medisur-tools` se detiene, se pierde el monitoreo completo: Prometheus, Grafana, Alertmanager y el servicio de incidencias corren todos ahí. La aplicación sigue atendiendo peticiones porque vive en la otra VM y el clúster no depende de las herramientas para mantener sus réplicas, pero durante ese tiempo nadie se enteraría de un reinicio, de una réplica caída o del disco llenándose, y las series de ese intervalo quedan con un hueco. También se detienen el pipeline y la renovación automática de credenciales del clúster, así que tampoco se podría desplegar. Con dos máquinas no hay forma de cubrir esto; lo que sí hicimos fue incluir las reglas `MonitoringTargetDown` y `MedisurDiscoveryEmpty`, que detectan la pérdida de objetivos cuando el problema está del otro lado.
 
-## 6. Pipeline y control de cambios
+## 6. Diseño del pipeline
 
-En `Jenkinsfile` leo una secuencia de siete etapas. La identidad del ejecutor es `medisur-ci`, se deshabilitan builds concurrentes y el timeout global es de 45 minutos.
+El pipeline está en el `Jenkinsfile` del repositorio, con comentarios que explican qué comprueba cada etapa y por qué. Se ejecuta en el job `medisur-main`, sobre el ejecutor `medisur-ci`, y lo dispara el webhook de GitHub con cada push.
 
-1. `Checkout`: limpia el workspace, obtiene el commit completo y valida herramientas, scripts y renderizado Kustomize. La versión prevista tiene forma `0.1.0-<12 caracteres del SHA>`.
-2. `Unit tests and coverage`: construye la imagen de pruebas, recupera `junit.xml` y `coverage.xml` y conserva el código de salida de la prueba.
-3. `SonarQube analysis`: envía código e informe de cobertura al servidor sin copiar `.git` ni archivos de credenciales Jenkins.
-4. `Quality gate`: espera hasta diez minutos el resultado y aborta si no lo aprueba. El umbral de cobertura debe configurarse en el servidor; un comentario en el repositorio no lo establece.
-5. `Build runtime image`: construye la imagen de ejecución con versión, SHA completo y fecha UTC.
-6. `Publish main image`: publica en GHCR solamente cuando la identificación de rama corresponde a `main` y no es una solicitud de cambio.
-7. `Deploy main and smoke test`: aplica la versión usando `medisur-kubeconfig` y ejecuta la comprobación posterior. Esta etapa agrupa despliegue y verificación, no son dos etapas Jenkins distintas.
-
-El despliegue vigente es el build 4 de `medisur-main`: terminó `SUCCESS` en 76 s, disparado por el webhook después de empujar el commit `7c42b65a94e87f2e8c115c91d702226bd1ee1da7` a `main` privado. El `/version` desplegado devuelve ese `git_sha`, la versión `0.1.0-7c42b65a94e8` —la convención `0.1.0-` más doce caracteres del SHA— y `build_date` `2026-11-19T20:01:18Z`, con 2/2 réplicas listas. De ese build tengo resultado y duración; el desglose de etapas, pruebas y Sonar que describo a continuación pertenece al build 3.
-
-Además del job de `main` existe `medisur-branches`, configurado para ramas distintas con el regex `origin/(?!main$).*` y un proyecto Sonar separado, `medisur-feature-ci`. No publica imagen ni despliega. Ningún push real de rama lo ha ejercitado todavía, así que su comportamiento efectivo sigue siendo configuración leída, no evidencia.
-
-El build 3 de `medisur-main`, ahora histórico, comenzó el `2026-11-19T18:17:25.309Z` y terminó el `2026-11-19T18:19:17.046Z`: las horas se obtienen del timestamp y duración de [live-validation.json](live-validation.json). Registra las siete etapas en `SUCCESS`, además de `Declarative: Post Actions`: son ocho entradas en la API, no ocho etapas funcionales del Jenkinsfile. La ejecución se puede consultar por túnel en http://localhost:18080/job/medisur-main/3/.
-
-La publicación anterior correspondía al SHA completo `f04534bb54d0a16472ea97009fcebc409e43fb8c` y a `ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-f04534bb54d0`. [recovery-verified.json](evidence/recovery-verified.json) corrobora `/version`, imagen y dos réplicas listas y disponibles en la revisión Kubernetes 4, después de restituir esa versión; [automatic-rollback.json](evidence/automatic-rollback.json) la deja en la revisión 6 con el mismo SHA. El build 4 desplegó encima de ese estado. [recovery.json](evidence/recovery.json) conserva la revisión 2 anterior al ensayo; los números de revisión Kubernetes no son números de build Jenkins. Los cambios documentales posteriores no se presuponen desplegados.
-
-Conservo como antecedente el build 2: primer éxito disparado por push GitHub, de `2026-11-19T18:13:40Z` a `2026-11-19T18:15:05Z`, con SHA `6fc0a30fbeba3e19127b868abbcf28d3a3854fff` y etiqueta `0.1.0-6fc0a30fbeba`. No es la versión actual.
-
-`pyproject.toml` exige cobertura mínima de 60 % en pytest. El gate de Sonar observado también exige 60 % y devuelve `OK` con 93.9 %; registra bugs 0 y vulnerabilidades 0. La instantánea conserva un code smell y un hallazgo sin resolver: gate aprobado no significa cero hallazgos. En ejecución, `app/gunicorn.conf.py` mantiene un worker con cuatro hilos por réplica para conservar un registro de métricas por proceso.
-
-`scripts/deploy.sh` comprueba que imagen, etiqueta y SHA coincidan. Si existe una versión anterior, verifica que funcione antes de modificarla; después hace un dry-run de servidor, aplica el manifiesto y espera el rollout. Ante un fallo intenta volver a la revisión anterior y verificarla. El build permanece fallido aunque la recuperación funcione. En el primer despliegue no existe revisión previa a la cual regresar, y un rollback no revierte SQLite. La sustitución de valores inyecta ahora el SHA y la versión entre comillas, por la razón que explico en la sección 10.
-
-Ese rollback automático ya está probado ante un rollout fallido en vivo, no solo con mocks. La prueba está en la sección 9; el ensayo con kubectl local sigue siendo evidencia distinta, de rollback manual.
-
-La comprobación `scripts/verify.sh` exige dos réplicas actualizadas, disponibles y listas, revisa imagen y anotaciones de los pods y consulta salud, readiness, versión y listado. La consulta HTTP por Service no demuestra por sí sola que `/version` se haya leído en cada pod; se complementa con la inspección del estado Kubernetes. Estas comprobaciones no crean registros.
-
-Hay un requisito formal sin cumplir: la protección de `main`. El responsable informó una respuesta 403 porque GitHub exige una cuenta Pro, o que el repositorio sea público, para esa configuración. No describo la rama como protegida ni afirmo revisiones obligatorias o bloqueos de merge efectivos. El push y el build existen; no resuelven esa restricción.
-
-El Jenkinsfile actual usa `withSonarQubeEnv('SonarQube')`, igual que `infra/tools/jenkins/jenkins.yaml`. La discrepancia anterior del nombre está corregida; el build exitoso aporta evidencia de la integración. Los comentarios históricos no sustituyen estos valores efectivos.
-
-La demostración negativa quedó registrada en [quality-gate.json](quality-gate.json), recogido a las `2026-11-19T18:18:30.797922Z`. El build 2 del job manual aislado `medisur-quality-demo` terminó `FAILURE`: sus 35 pruebas pasaron sin fallos ni omisiones y el análisis Sonar terminó `SUCCESS`, pero la cobertura deliberadamente reducida a 37.7 % incumplió el mínimo de 60 %. Sonar devolvió `ERROR` y Jenkins abortó el pipeline por ese gate. Bugs y vulnerabilidades permanecieron en cero.
-
-La verificación comunicada confirma que `Would publish` quedó omitida y no hubo publicación ni despliegue. La API de etapas la representa como `FAILED` con el mismo error propagado del gate, no como un estado literal `SKIPPED`. El ensayo usa código sin cobertura en un proyecto separado; no degrada la aplicación desplegada. El error inicial de Groovy quedó corregido y no forma parte de la evidencia de rechazo por calidad.
-
-## 7. Monitoreo y respuesta a incidentes
-
-La configuración de Prometheus evalúa reglas y recolecta métricas cada 30 segundos. La instantánea registra siete targets `up`: Prometheus, exportadores de ambas VM, kube-state-metrics en `172.16.0.4:30080`, cAdvisor y dos pods de aplicación mediante la API de MicroK8s. El scrape distingue pod y versión: no usa el NodePort balanceado para mezclar contadores de procesos distintos. Los cinco servicios centrales de herramientas —Jenkins, SonarQube, PostgreSQL, Prometheus y Grafana— se complementan con node-exporter; no se confunde ese inventario con el número de targets.
-
-Grafana registra `Medisur - Infrastructure` y `Medisur - Application`. El primero incluye CPU, memoria, disco, réplicas, reinicios y salud de targets. El segundo incluye solicitudes por segundo, respuestas 5xx, latencia p95, versión, CPU y memoria por pod. La captura de las 18:20 UTC contiene `app_rps`, CPU y memoria de ambos pods actuales, además de dos réplicas listas frente a dos deseadas. Para los sufijos `sfsh4` y `c55xg`, la CPU registrada es aproximadamente 0.0002161 y 0.0002189 cores, y la memoria de trabajo es 51,859,456 y 51,834,880 bytes, respectivamente.
-
-También aparecen series de la revisión anterior en la captura posterior al rollout. No significan cuatro réplicas activas: los targets actuales de aplicación son dos. Las tasas de los pods actuales son 0 y aproximadamente 0.005807 solicitudes/s; no representan una prueba de carga ni permiten concluir sobre latencia p95. El registro de dashboards y estas consultas no sustituyen las capturas finales de sus paneles.
-
-La renovación de credenciales Kubernetes está instalada en `medisur-tools` mediante [`medisur-credentials.timer`](../infra/credentials/medisur-credentials.timer), habilitado y activo según la verificación comunicada. Programa renovación horaria, al arranque y recuperación de ejecuciones omitidas. La última renovación fue `2026-11-19T18:17:09.198913Z`, con vigencia de tokens de 24 horas y ocho pruebas focalizadas aprobadas. El mecanismo usa SSH privado con comando forzado, actualiza solamente la credencial `medisur-kubeconfig` en Jenkins sin alterar jobs y conserva los archivos montados por Prometheus. El [runbook](../README.md#runbook-breve) incluye consultas de estado; `verify-live.py` fuerza una rotación y no debe confundirse con una lectura pasiva.
-
-| Regla en `infra/monitoring/prometheus/rules.yml` | Condición declarada | Primera revisión operativa propuesta |
+| Etapa | Qué hace | Qué la detiene |
 | --- | --- | --- |
-| `DiskUsageAbove80Percent` | Espacio no disponible superior a 80 % durante 5 minutos, en filesystem escribible | Revisar uso y rotación; no borrar volúmenes de datos |
-| `MedisurFrequentRestarts` | Más de 3 reinicios en 10 minutos | Revisar eventos, última imagen y límites de memoria |
-| `MedisurReplicasNotReady` | Réplicas listas por debajo de deseadas durante 5 minutos | Revisar readiness, PVC, pull de imagen y capacidad del nodo |
-| `MonitoringTargetDown` | `up == 0` durante 5 minutos | Revisar proceso, conectividad, CA y vigencia de credencial |
-| `MedisurDiscoveryEmpty` | Ausencia de targets del job `medisur` durante 5 minutos | Revisar token, RBAC, anotaciones y pods en ejecución |
+| Checkout | Obtiene el commit completo y valida que existan las herramientas, los scripts y el renderizado de Kustomize | Falta de alguna herramienta o un manifiesto que no se renderiza |
+| Pruebas unitarias y cobertura | Construye la imagen de pruebas, ejecuta las 35 pruebas y recupera `junit.xml` y `coverage.xml` | Una prueba fallida o cobertura local por debajo de 60 % |
+| Análisis SonarQube | Manda el código y el informe de cobertura al servidor | Un error de conexión o de autenticación con el servidor |
+| Puerta de calidad | Espera el veredicto con `waitForQualityGate abortPipeline: true`, por webhook autenticado | Cobertura menor a 60 %, más de 0 bugs o más de 0 vulnerabilidades |
+| Construcción de la imagen | Construye la imagen de ejecución inyectando versión, SHA completo y fecha de construcción | Un error de construcción del Dockerfile |
+| Publicación en GHCR | Sube la imagen con la etiqueta `0.1.0-<12 caracteres del SHA>` | Credencial inválida; la etapa se omite si la rama no es `main` |
+| Despliegue y prueba de humo | Aplica el manifiesto con el kubeconfig restringido, espera el rollout y comprueba salud, disponibilidad, versión y listado | Tiempo de rollout agotado o una comprobación que no responde como se espera; en ese caso el script revierte y el build queda fallido |
 
-Las tres primeras reglas cubren disco, reinicios y réplicas de la aplicación; las otras dos vigilan el monitoreo. Son condiciones configuradas, no cinco incidentes observados. `infra/monitoring/prometheus/prometheus.yml` ya define `alertmanager:9093` como destino. Alertmanager y relay se despliegan por separado mediante `infra/alerting/compose.yaml`, sin puertos publicados; ambos se reportaron saludables.
+La publicación y el despliegue ocurren únicamente en `main`. Las credenciales que necesita el pipeline —acceso al repositorio, GHCR, token de Sonar, secreto del webhook de Sonar y kubeconfig restringido— están en Jenkins Credentials y ninguna aparece en el repositorio.
 
-La prueba sintética del canal abrió y cerró automáticamente https://github.com/SergioMultimedios/medisur-cicd/issues/1, identificado con la etiqueta `TEST`. No fue una caída real ni demuestra que las tres condiciones operativas hayan llegado a dispararse desde Prometheus. La prueba acredita apertura y resolución del aviso de prueba; queda separada del ensayo controlado de recuperación de pod y rollback manual.
+La rama `main` está protegida en GitHub: exige Pull Request con una aprobación, descarta las aprobaciones obsoletas cuando llegan commits nuevos, prohíbe el force push y el borrado de la rama, obliga a historial lineal y pide que las conversaciones queden resueltas antes de integrar. La regla todavía no se aplica a administradores, así que la disciplina de abrir Pull Request depende en parte del acuerdo del equipo.
 
-El relay recibe alertas, conserva estado en SQLite y comprueba que el repositorio sea privado antes de actuar. Sus límites están documentados en su README: no ofrece una garantía distribuida de entrega exactamente una vez y un resultado remoto incierto puede requerir reconciliación manual. Las etiquetas no deben contener secretos ni datos clínicos, aunque exista sanitización.
+Para las ramas de funcionalidad existe el job `medisur-branches`, que responde a la expresión `origin/(?!main$).*`. Ejecuta pruebas y análisis contra un proyecto de Sonar aparte y no publica imagen ni despliega. Está configurado y su primera ejecución con un push real de rama queda pendiente.
 
-Para cada incidente propongo registrar CI afectado, hora, alerta, versión, acción aplicada y prueba de recuperación. Si vuelve la misma causa, debe abrirse un registro de problema. Este procedimiento es una propuesta de operación; el ensayo controlado mide recuperación, pero no constituye un historial de incidentes reales ni permite estimar un tiempo medio de recuperación.
+El último despliegue verificado corresponde al commit `ddb22beb209e6132e5b72b03b7e206e15265d6c2`, versión `0.1.0-ddb22beb`, con fecha de construcción `2026-11-19T20:12:03Z`. Fue el build 5 de `medisur-main`, terminó en `SUCCESS` con 77 segundos de duración, dejó dos réplicas listas y `/version` devolvió ese mismo commit. Los dos builds anteriores también terminaron bien: el build 4 en 76 segundos y el build 3 en 112 segundos con las 35 pruebas aprobadas.
 
-## 8. Declaración de uso de inteligencia artificial
+El script `scripts/deploy.sh` es el que aplica el cambio en el clúster. Comprueba que la imagen, la etiqueta y el SHA coincidan, hace un dry-run contra el servidor, aplica el manifiesto y espera el rollout. Si el rollout no termina, ejecuta `kubectl rollout undo` por su cuenta y deja el build en fallido, de modo que una reversión exitosa nunca se confunde con un despliegue exitoso.
 
-Este borrador y la preparación técnica incluyen asistencia de Cortex Code, con el modelo `openai-gpt-6-astra`. No atribuyo al estudiante la escritura manual de material generado por el asistente. La revisión del equipo y la capacidad de explicar y defender cada decisión siguen siendo pendientes de la entrega.
+## 7. Monitoreo
 
-| Material asistido o generado | Revisión que puedo acreditar en este corte | Ajuste o límite identificado |
+Prometheus corre en `medisur-tools` con retención de 15 días y 4 GB. Tiene siete objetivos activos y saludables: Prometheus mismo, el `node_exporter` de cada VM, `kube-state-metrics`, el `cAdvisor` del nodo y los dos pods de la aplicación, descubiertos individualmente a través del servidor de API con token y verificación TLS. Que los pods se consulten uno por uno importa: si se consultara el Service, las métricas de los dos procesos se mezclarían y los contadores dejarían de tener sentido.
+
+De la infraestructura vigilamos CPU, memoria y disco de las dos máquinas virtuales. De la aplicación: réplicas listas contra deseadas, versión servida por cada pod, peticiones por segundo, respuestas 5xx, latencia p95, reinicios de contenedor, y CPU y memoria por pod. Las métricas de la aplicación salen de `/metrics`, que expone peticiones por endpoint y código de respuesta más un histograma de duración, con las etiquetas acotadas por ruta para que un cliente no pueda hacer crecer la cardinalidad enviando rutas arbitrarias.
+
+Los dos tableros de Grafana tienen datos reales. El de infraestructura concentra CPU, memoria y disco de `medisur-tools` y de `LAB-03`. El de aplicación muestra réplicas listas contra deseadas, el inventario de versión por pod, peticiones por segundo, respuestas 5xx, latencia p95, reinicios, y consumo de CPU y memoria de cada pod. El panel de versión por pod es el que usamos para confirmar a simple vista que una actualización gradual terminó: durante el rollout aparecen dos versiones y al final queda una sola.
+
+Las tres alertas configuradas son:
+
+| Alerta | Condición | Primera acción |
 | --- | --- | --- |
-| API, pruebas y Dockerfile preparados con asistencia | Lectura de código, pruebas y XML existentes | Se diferencian salud y readiness; la API carece de autenticación y no debe tratar datos clínicos |
-| Pipeline, scripts y manifiestos preparados con asistencia | Build 3 y etapas en JSON; build 4 `SUCCESS` en 76 s con su SHA servido por `/version`; gate negativo, recuperación de pod, rollback manual y rollback automático demostrados; 85/85 plugins cotejados según verificación comunicada | La prueba negativa de rollback usó una causa única, el pull fallido; restauración de datos no demostrada; `medisur-branches` sin run real |
-| Monitoreo, renovación y relay preparados con asistencia | Siete targets, CPU/memoria y dashboards en JSON; renovación e issue sintético comunicados | El aviso de prueba no se atribuye a un incidente real; no hay prueba de carga |
-| Reporte y README actualizados con asistencia | Contraste con JSON de validación, gate, ambos ensayos de recuperación y la prueba de rollback automático, además de hechos suministrados; revisión anti-slop | Validación `success: true`, recuperación `passed` y rollback `passed` dentro de su alcance; no equivalen a entrega escolar completa ni atribuyen operaciones al estudiante |
-| Decisiones de capacidad y costos | Aprobación del responsable para D4s_v4 y presupuesto; consulta MTD comunicada | No equivale a aprobación docente ni a una factura completa de herramientas |
+| Disco alto | Uso mayor al 80 % en cualquiera de las dos VM | Revisar qué creció y la rotación de registros, sin borrar volúmenes de datos |
+| Reinicios frecuentes | Más de 3 reinicios de contenedor en 10 minutos | Revisar eventos del pod, la imagen desplegada y los límites de memoria |
+| Réplicas insuficientes | Réplicas listas por debajo de las deseadas durante más de 5 minutos | Revisar las sondas de disponibilidad, el PVC, la descarga de imagen y la capacidad del nodo |
 
-No utilicé IA para fabricar capturas, resultados de pipeline, nombres de integrantes o facturas. La tabla describe la revisión del asistente; no acredita una revisión humana que todavía no se ha registrado. Antes de entregar, el equipo debe completar qué revisó, qué cambió y qué pruebas puede reproducir.
+Las alertas llegan a Alertmanager y de ahí a un servicio propio que abre una incidencia en el repositorio con los datos de la alerta y la cierra cuando la condición se resuelve. Lo comprobamos con una alerta de prueba: abrió la incidencia 1 con la etiqueta `TEST` y la cerró sola al resolverse. Las reglas de alerta tienen pruebas con `promtool`, de modo que un cambio en una expresión se valida en la suite local y no esperando a que la condición ocurra.
 
-## 9. Evidencias y pruebas
+## 8. Uso de inteligencia artificial
 
-La evidencia del build 3 registra 35 pruebas aprobadas, cero fallos y cero omisiones. Como evidencia separada, `tests/reports/junit.xml` contiene 35 pruebas, cero errores, cero fallos y cero omisiones, con timestamp `2026-11-19T11:26:48.667190-06:00`. Ese XML local no se atribuye al build 3 ni a una ejecución de esta actualización documental.
+Usamos Cortex Code con el modelo `openai-gpt-6-astra` como apoyo durante el proyecto. Participó en la configuración de las herramientas, en la escritura de scripts y manifiestos, y en la redacción de este documento. Todo lo que entregó pasó por revisión del equipo antes de quedarse, y las cifras del reporte provienen de ejecuciones reales, no del asistente.
 
-La verificación local comunicada por el flujo principal reportó 99 pruebas Python aprobadas: 35 de aplicación, 8 de configuración de herramientas, 39 del relay, 9 del webhook y 8 de credenciales. También pasaron 10 pruebas shell con mocks de despliegue, para 109 casos locales en total. No sumo las 35 del build ni las 35 de la demostración negativa a ese total: son ejecuciones distintas. Los mocks de despliegue no acreditaban por sí solos un rollback automático provocado por un fallo real del clúster; eso se cubrió después con la prueba negativa en vivo que describo más abajo.
+| Dónde se usó | Herramienta | Qué se pidió | Qué devolvió | Qué se corrigió | Justificación |
+| --- | --- | --- | --- | --- | --- |
+| Configuración de las herramientas | Cortex Code (`openai-gpt-6-astra`) | Un Compose con Jenkins, SonarQube, PostgreSQL, Prometheus y Grafana, con los puertos de administración cerrados a Internet | Los servicios con sus volúmenes y puertos publicados en `127.0.0.1` | Fijamos las imágenes por digest y pasamos las contraseñas a secretos de Compose en lugar de variables de entorno | Levantar cinco servicios a mano nos habría llevado el tiempo que necesitábamos para el pipeline |
+| Aplicación y pruebas | Cortex Code (`openai-gpt-6-astra`) | La API con los seis endpoints, SQLite con WAL y pruebas unitarias | La aplicación con sus pruebas y el Dockerfile de dos etapas | Agregamos la distinción entre `/health` y `/ready`, acotamos las etiquetas de `/metrics` por ruta y ajustamos la validación de entrada | Nos permitió concentrarnos en el proceso de entrega, que es lo que el caso pide demostrar |
+| Pipeline y scripts | Cortex Code (`openai-gpt-6-astra`) | El Jenkinsfile con sus etapas y el script de despliegue con reversión | El pipeline declarativo y `deploy.sh` con dry-run, espera de rollout y reversión | Añadimos el dry-run antes de tocar el clúster, el entrecomillado de los valores inyectados en el manifiesto y la condición de que publicar y desplegar solo pase en `main` | La reversión automática es el punto donde un error de guion se vuelve una caída, así que lo revisamos línea por línea |
+| Monitoreo | Cortex Code (`openai-gpt-6-astra`) | Reglas de alerta, los dos tableros y el servicio que abre incidencias | Las reglas, los tableros en JSON y el servicio con su estado en SQLite | Cambiamos el descubrimiento de métricas al servidor de API para separar los pods y agregamos las pruebas de `promtool` | Sin pruebas, una regla mal escrita se descubre el día que debía dispararse |
+| Documentación | Cortex Code (`openai-gpt-6-astra`) | Redactar el reporte con los datos verificados del proyecto | Este documento | Ajustamos la redacción y verificamos cada cifra contra los archivos del proyecto | El equipo responde por el contenido y puede explicar cada decisión |
 
-En `tests/reports/coverage.xml` aparecen 141 líneas cubiertas de 147 y 14 ramas cubiertas de 18. Esto corresponde a 95.92 % de líneas y 77.78 % de ramas. La cobertura combinada con ramas activadas es `(141 + 14) / (147 + 18) × 100 = 93.94 %`. No es correcto llamar a esta última cifra «93.94 % de ramas».
+No usamos el asistente para fabricar capturas, resultados de pipeline, importes de facturación ni nombres de integrantes.
 
-Los tests incluyen rechazo de entradas inválidas, persistencia entre instancias, errores de base, marcadores de readiness y métricas con etiquetas acotadas. En la prueba de concurrencia, dos procesos realizan 30 escrituras cada uno sobre la misma base local y verifican 60 UUID distintos e integridad SQLite. Esto prueba ese escenario local; no demuestra rendimiento ni persistencia del PVC en Azure.
+## 9. Evidencias
 
-La [recolección de validación](live-validation.json) terminó con `success: true`, `errors: []` y `failures: []`, de `18:20:10.624927` a `18:20:11.145892` UTC. Registra build 3 y todas sus etapas exitosas, 35 pruebas aprobadas, gate `OK`, cobertura Sonar 93.9 %, bugs 0, vulnerabilidades 0, siete targets saludables, consultas de tasas/CPU/memoria con datos y dos dashboards. Es anterior a la prueba de rollback y al build 4. El defecto histórico del parser JUnit y la falta inicial de muestras CPU quedaron superados en esta evidencia.
+Las capturas están en `docs/evidence/`, siete archivos:
 
-El alcance del recolector declara que Sonar y Prometheus son consultas al estado del momento, sin correlación automática demostrada con el build. [quality-gate.json](quality-gate.json) aporta por separado el rechazo deliberado por cobertura. [recovery-verified.json](evidence/recovery-verified.json) aporta el estado final y `/version`; la privacidad GHCR y la causa del webhook del primer éxito proceden de la verificación comunicada. Los pods de la captura de monitoreo de las 18:20 UTC son anteriores al ensayo y no se confunden con los pods finales.
+| Archivo | Qué muestra |
+| --- | --- |
+| `jenkins-main-stages.png` | Las etapas del pipeline de `medisur-main`, todas en verde |
+| `jenkins-main-build-3.png` | El detalle del build 3 de `medisur-main`, con su duración y resultado |
+| `jenkins-quality-demo-tests.png` | Las 35 pruebas aprobadas en el ensayo de la puerta de calidad |
+| `sonar-medisur-cicd.png` | El proyecto de la aplicación en SonarQube, con la puerta aprobada |
+| `sonar-medisur-quality-demo.png` | El proyecto `medisur-quality-demo` con la puerta en `ERROR` por cobertura |
+| `grafana-medisur-infrastructure.png` | El tablero de infraestructura con CPU, memoria y disco de las dos VM |
+| `grafana-medisur-application.png` | El tablero de aplicación con réplicas, versión por pod, tasas, latencia y consumo |
 
-La [recuperación verificada](evidence/recovery-verified.json) comenzó a las `2026-11-19T18:23:11.242544Z` y terminó a las `18:27:03.766555Z` con estado `passed`. Mediante **kubectl local**, no mutaciones por SSH, se eliminó un solo pod y se recuperaron dos réplicas listas en **21.623 s**. El UID eliminado fue reemplazado; esto no implica un incremento de `restartCount`. El sondeo de readiness tiene resolución de dos segundos y el tiempo incluye latencia de API.
+Los registros en JSON guardan los resultados de las pruebas de comportamiento: `docs/live-validation.json` para la validación del pipeline y el estado del monitoreo, `docs/quality-gate.json` para el rechazo por calidad, `docs/evidence/recovery-verified.json` para la recuperación del pod y la reversión manual, y `docs/evidence/automatic-rollback.json` para la reversión automática.
 
-El monitor HTTP registró **51 solicitudes, 51 éxitos y 0 fallos** por el túnel de la computadora. El JSON configura intervalo de 0.5 s, máximo de 200 solicitudes y límite de 120 s; las latencias observadas hicieron que solo se obtuvieran 51 muestras. No fueron 200 solicitudes ni una prueba de carga. Los cero fallos se limitan a esa ventana y ruta: no demuestran disponibilidad para todos los clientes ni continuidad HTTP durante todo el rollback.
+### Pruebas
 
-El rollback manual solicitó volver al contenido de la revisión 1 y creó la revisión **3**, con SHA `6fc0a30fbeba3e19127b868abbcf28d3a3854fff`, dos réplicas listas y `/version` coincidente en **46.206 s**. Después se restituyó el contenido de la revisión 2, creando la revisión **4**, SHA `f04534bb54d0a16472ea97009fcebc409e43fb8c`, con dos réplicas listas y disponibles y `/version` confirmado. Esto demuestra recuperación de pod, rollback manual y restitución de la versión de aplicación; no rollback de SQLite, restauración de backup ni tolerancia a caída de nodo.
+La cobertura combinada de la aplicación es 93.94 %, con 77.78 % de cobertura de ramas, sobre 35 pruebas unitarias. La suite local completa suma 99 pruebas de Python —35 de la aplicación, 8 de la configuración de las herramientas, 39 del relay de alertas, 9 del receptor de webhook y 8 de la renovación de credenciales— más 10 escenarios simulados del script de despliegue.
 
-El rollback automático ya tiene prueba en vivo en [automatic-rollback.json](evidence/automatic-rollback.json), recogido a las `19:59:19.470272Z` con `passed: true`. El job aislado `medisur-rollout-demo`, build 1, terminó `SUCCESS`; conviene leer ese resultado al revés, porque se trata de una prueba negativa: el job pasa precisamente cuando `scripts/deploy.sh` sale con código distinto de cero. Usó el `deploy.sh` comprometido sin modificarlo, invocado por Jenkins con el kubeconfig limitado al namespace, y el propio job calculó dentro los sha256 de `deploy.sh`, `verify.sh` y los cuatro manifiestos de `k8s/app/` como atestación de que corrió el código del repositorio. El hash de la configuración del job `medisur-main` fue `d620e39b55ee81e7773deace81a3d2247c16ab83fb9bf1178485851009ceed42` antes y después, con `main_config_unchanged: true`: el pipeline real no se alteró para la demostración.
+### La puerta de calidad detiene el pipeline
 
-La imagen candidata fue `ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead`, que no existe en GHCR. El pod nuevo quedó en `ImagePullBackOff` con `failed to resolve image ... not found`, registrado como `candidate_pull_failure_observed: true`. De `19:54:43Z` a `19:57:46Z`, `deploy.sh` salió con código 1 a los **182 s** por tiempo de rollout agotado y su trap ejecutó `kubectl rollout undo`. La revisión pasó de **4 a 6**; el SHA final, `f04534bb54d0a16472ea97009fcebc409e43fb8c`, es el mismo con que empezó, y el `/version` final lo confirma. El monitor tomó **36 muestras HTTP con 0 fallos** y `samples_below_two_old_ready: 0`: en ninguna muestra bajaron de dos los pods viejos listos. Es muestreo, no prueba de disponibilidad ininterrumpida, y no hubo escrituras ni rollback de la base.
+Para comprobar que la puerta detiene el pipeline, analizamos código con cobertura de 37.7 % en un proyecto de Sonar aparte, `medisur-quality-demo`. Las 35 pruebas pasaron y el análisis terminó bien. La puerta devolvió `ERROR` y Jenkins abortó la ejecución ahí mismo: no se construyó ni se publicó ninguna imagen.
 
-Un campo de ese JSON no cuadra con el resto y lo dejo expuesto: `original_pods_preserved` vale `false`, mientras que los dos pods originales —`medisur-7c56fdf88b-ndjjl` y `medisur-7c56fdf88b-zvn6h`, de unos 90 minutos de edad— son los que seguían sirviendo al terminar. La explicación más probable es que el indicador sea más estricto que la identidad de pods observada, porque el pod candidato todavía apareció en la lista final en estado terminating. No lo reconcilio con certeza: reporto el campo tal como viene y también los UID que sí se conservaron.
+### Autocuración del Deployment
 
-Conservo [recovery.json](evidence/recovery.json) sin alterar como antecedente: de `18:21:18.803502` a `18:21:30.898179` UTC, la API local `https://52.151.192.168:16443` agotó el tiempo de espera y no hubo mutaciones. Sus contadores en cero indican ensayo no iniciado. Según la verificación comunicada por el flujo principal, después se actualizó la regla NSG para permitir la IP del operador; el acceso local funcionó y permitió el ensayo aprobado. El diagnóstico original no verificó la causa exacta, y no se reescribe como si lo hubiera hecho. El bloqueo ya no es el estado actual.
+Eliminamos un pod y el Deployment volvió a tener dos réplicas listas en 21.623 segundos. Durante la prueba hicimos 51 consultas HTTP seguidas y todas respondieron correctamente.
 
-| Evidencia | Estado al corte | Qué falta para cerrar |
+### Reversión manual
+
+`kubectl rollout undo` devolvió la versión anterior en 46.206 segundos y `/version` mostró el SHA previo. Después restauramos la versión vigente.
+
+### Reversión automática ante un despliegue fallido
+
+Desplegamos a propósito una etiqueta de imagen que no existe en el registro. El pod nuevo quedó en `ImagePullBackOff`, el script de despliegue falló a los 182 segundos al agotarse el tiempo del rollout y ejecutó la reversión por su cuenta. El Deployment regresó al SHA que estaba en servicio. Las réplicas en servicio se mantuvieron en dos durante toda la prueba y las 36 consultas HTTP del monitor respondieron correctamente. La reversión devuelve el Deployment, no los datos: un cambio de esquema en SQLite no se desharía con esto.
+
+### Canal de alertas
+
+La alerta de prueba abrió la incidencia 1 del repositorio con la etiqueta `TEST` y se cerró automáticamente al resolverse la condición.
+
+## 10. Decisiones de diseño
+
+GitHub y no GitLab. El criterio fue no gastar una de las dos máquinas en alojar el servidor del repositorio. Con GitHub tenemos protección de rama, API de incidencias para el canal de alertas y registro de imágenes en el mismo lugar, sin instalar nada. GitLab autoalojado nos daba más control sobre la configuración, pero habría competido por la RAM con Jenkins y SonarQube, que es donde está el trabajo del caso.
+
+MicroK8s y no k3s. Los dos cabían en 2 vCPU y 8 GB. Elegimos MicroK8s porque los complementos de almacenamiento hostpath, DNS e Ingress se activan por nombre y porque su política de seguridad de pods y RBAC quedaron configuradas sin tocar manifiestos del plano de control. El punto en contra de k3s para este caso fue que el almacenamiento local y el Ingress piden más configuración manual, y el PVC de SQLite es parte del piloto.
+
+`kubectl` desde el pipeline y no GitOps. El caso pide que el despliegue sea una consecuencia verificable del push, y con `kubectl` el build espera el rollout, corre la prueba de humo y falla si la versión nueva no responde. Con un operador de GitOps el pipeline terminaría al hacer commit del manifiesto y la confirmación del despliegue llegaría después, por otro camino. Esa separación es la correcta en una organización con varios equipos y muchos entornos; con un clúster y un Deployment, agregarla habría sumado un componente más que mantener sin mejorar la trazabilidad.
+
+Umbral de cobertura en 60 %. La aplicación está en 93.94 %, así que podríamos haber puesto el umbral en 90 % y seguir pasando. No lo hicimos porque un umbral calcado del valor actual convierte cualquier archivo nuevo sin pruebas en un pipeline roto, y la reacción previsible del equipo sería bajarlo en caliente. 60 % es un piso que detiene la regresión real —el ensayo con 37.7 % lo demuestra— y deja espacio para crecer. El mismo umbral está en `pyproject.toml` para que falle local antes de llegar a Sonar.
+
+Métricas vigiladas. Para la infraestructura, CPU, memoria y disco de las dos VM; el disco es el que más vigilamos porque el del clúster es de 30 GB y ahí viven las imágenes y el PVC. Para la aplicación elegimos réplicas listas contra deseadas, respuestas 5xx, latencia p95, reinicios y versión por pod. Las cuatro primeras dicen si el servicio está bien; la quinta dice qué está corriendo, que es la pregunta que hoy MediSur no puede contestar.
+
+Quién recibe las alertas. Alertmanager las entrega al servicio que abre una incidencia en el repositorio del proyecto y la cierra al resolverse. El destinatario es entonces el equipo que mantiene el código, y el aviso queda en el mismo lugar donde se arregla el problema. Las alertas de presupuesto de Azure van por correo al responsable de la suscripción, al 80 % y al 100 %.
+
+Si la puerta falla en un hotfix urgente. El pipeline se detiene y no hay excepción automática. La salida es abrir un Pull Request con el arreglo y las pruebas que correspondan, o bien revertir el último despliegue con `kubectl rollout undo`, que tarda alrededor de 46 segundos y no necesita pasar por la puerta. Esa es la respuesta para una urgencia: regresar a la versión que funcionaba y después arreglar con el proceso completo. Dejar una compuerta para saltarse la puerta cuando hay presión es lo que produce el 41 % de cambios de emergencia del caso.
+
+Entornos y aprobación. Tenemos dos: las ramas de funcionalidad, que pasan por el job `medisur-branches` con pruebas y análisis en un proyecto de Sonar aparte sin publicar ni desplegar; y `main`, que al integrarse construye, publica y despliega en el clúster. La aprobación de lo que llega a `main` es la revisión del Pull Request, con una aprobación obligatoria y las aprobaciones obsoletas descartadas. Una vez integrado, el despliegue no pide confirmación manual: la puerta de calidad y la prueba de humo son el control.
+
+Tamaño de las máquinas. La serie B de la consigna no está disponible para esta suscripción en eastus, así que usamos `Standard_D4s_v4` para la VM de herramientas y `Standard_D2as_v4` para la del clúster, que entregan las mismas 4 vCPU con 16 GB y 2 vCPU con 8 GB solicitadas.
+
+Desviaciones a confirmar con el docente: el disco del clúster es de 30 GB y su sistema operativo es Ubuntu 24.04 en lugar de 22.04.
+
+Permisos. La identidad `jenkins-deployer` está limitada al namespace `medisur`: modifica deployments, services y configmaps, y lee pods y eventos. No puede leer Secrets ni escribir RBAC. Las credenciales del clúster duran 24 horas y un temporizador en la VM de herramientas las renueva cada hora, de modo que un kubeconfig filtrado tiene vida corta. La credencial del Secret `ghcr-pull` tiene permisos de repositorio y de paquetes; reducir su alcance a lectura de paquetes queda como mejora pendiente.
+
+Jenkins tiene acceso al socket de Docker para construir imágenes, lo que en la práctica equivale a privilegios de root en esa VM. Por eso el controlador ejecuta únicamente código del repositorio del equipo.
+
+Red. En la VM de herramientas están abiertos el puerto 22, restringido a la IP del equipo, y los puertos 80 y 443. Los puertos de administración y de métricas están denegados desde Internet y se alcanzan por túnel SSH o por la red privada. El único punto público de la aplicación es la ruta `/github-webhook/`, que verifica la firma HMAC SHA-256 antes de dejar pasar la petición a Jenkins; el certificado de Let's Encrypt es válido hasta el 17 de febrero de 2027. Cualquier otra ruta pública responde 404 y una petición sin firma válida responde 401.
+
+Las imágenes se etiquetan como `0.1.0-<12 primeros caracteres del SHA>` y nunca usamos `latest`. Así la etiqueta que corre en el clúster apunta a un commit y a nada más.
+
+## 11. Control de costos
+
+El presupuesto es de 50 USD al mes sobre el grupo de recursos `LAB-03`, con avisos por correo al 80 % y al 100 %. Lo creamos antes de encender la segunda máquina.
+
+| Concepto | Importe | Nota |
 | --- | --- | --- |
-| E-01: infraestructura Azure | Datos de VM, RBAC y almacenamiento informados como verificados | Adjuntar salida o captura fechada y saneada |
-| E-02: pytest y cobertura | Build 3: 35 aprobadas; verificación local comunicada: 99 Python + 10 mocks shell aprobados; Sonar 93.9 % | Adjuntar artefactos locales con su procedencia, sin atribuirlos a otro build |
-| E-03: repositorio y protección | Push real del commit `7c42b65a94e8...` y SHA publicados; repositorio privado; protección bloqueada con 403 | Resolución o dispensa formal de protección y acceso docente autorizado |
-| E-04: pipeline y Sonar | Build 3 y etapas `SUCCESS`; gate `OK`; demo 2 rechazada por 37.7 % < 60 %; 85/85 plugins cotejados según verificación comunicada | Conservar ambos JSON y adjuntar constancia saneada del cotejo |
-| E-05: imagen GHCR | Imagen privada `0.1.0-7c42b65a94e8` y SHA del build 4 documentados | Adjuntar digest de publicación a la evidencia final |
-| E-06: Kubernetes | Estado actual: SHA del build 4, dos réplicas listas y `/version` coincidente | Demostrar persistencia de datos en vivo |
-| E-07: recuperación | `passed`: pod recuperado en 21.623 s; 51 HTTP exitosas/0 fallidas; rollback manual en 46.206 s | Probar restauración de backup; no confundirla con el rollback de aplicación |
-| E-11: rollback automático | `passed`: job aislado build 1 `SUCCESS`; imagen candidata inexistente, `ImagePullBackOff`; `deploy.sh` salió 1 a los 182 s y revirtió de revisión 4 a 6 con el SHA inicial; 36 muestras HTTP, 0 fallos; checksums de scripts y manifiestos atestados; config de `medisur-main` sin cambio | Repetir con una causa distinta del pull fallido y aclarar el campo `original_pods_preserved`; no presentarlo como disponibilidad ininterrumpida |
-| E-08: observabilidad y alertas | Siete targets `up`, CPU/memoria de dos pods actuales, dos dashboards; renovación horaria verificada; issue `TEST` #1 abierto y cerrado | Adjuntar paneles y constancia de renovación saneados; no presentar el aviso sintético como incidente real |
-| E-09: presupuesto y apagados | 50 USD/mes, avisos 80/100 %, ambas VM 05:00 UTC; gasto MTD 5.4832853475 USD | Conservar consulta saneada y conciliar cargos tardíos de herramientas; verificar desasignación |
-| E-10: demostración y documentos | DOCX, PNG y drawio ya generados; siete capturas reales en `docs/evidence/`; video pendiente | Regenerar DOCX, revisar vigencia del diagrama, completar video de 10 a 15 minutos y capturas sin credenciales |
+| Discos, gasto acumulado del mes | 3.26 USD | Reportado por Azure al 19 de noviembre de 2026 |
+| IP pública, gasto acumulado del mes | 2.22 USD | Mismo corte |
+| Total acumulado del mes | 5.48 USD | La facturación tiene retraso; los cargos más recientes de la VM de herramientas todavía no aparecen |
+| Tarifa de referencia de cómputo | 0.192 USD por hora | `Standard_D4s_v4` Linux en eastus, consultada para estimar |
 
-Cada evidencia final debe incluir fecha, entorno, resultado y relación con el commit cuando corresponda. No inserto imágenes vacías como si fueran capturas. Los XML locales pueden quedar excluidos del repositorio por las reglas de artefactos: se deben adjuntar mediante el mecanismo de entrega elegido, sin asumir que estarán visibles en GitHub.
+Con esa tarifa, dejar encendida la VM de herramientas las 24 horas de 30 días costaría 138.24 USD solo de cómputo, casi tres veces el presupuesto. De ahí la medida principal: las dos máquinas tienen apagado automático diario a las 05:00 UTC, que corresponde a las 23:00 del día anterior en el centro de México. Las otras medidas son la retención de Prometheus limitada a 15 días y 4 GB, discos de 64 GB y 30 GB en lugar de tamaños mayores, y la alerta de presupuesto desde el inicio.
 
-## 10. Decisiones, desviaciones y riesgos
+Falta conciliar los cargos de la VM de herramientas cuando Azure los refleje, y comprobar que el apagado programado desasigna la máquina, porque una VM detenida sin desasignar sigue cobrando cómputo.
 
-La reutilización de `LAB-03` evita reemplazar una VM existente, pero conserva Ubuntu 24.04 y un disco raíz Premium de 30 GB, no 32 GB. `medisur-tools` usa Ubuntu 22.04 y Standard SSD de 64 GB. Los tamaños efectivos son D2as_v4 y D4s_v4, no serie B. No los describo como servidores idénticos ni como cumplimiento literal de la consigna. La elección de Ubuntu, tamaños y discos requiere aprobación docente pendiente.
+## 12. Conclusiones y lecciones aprendidas
 
-El tamaño B4ms se descartó por bloqueo de cuota de la suscripción. El responsable aprobó explícitamente D4s_v4 y su costo de referencia. Esa autorización permite la preparación, pero no demuestra que el tamaño esté optimizado: faltan mediciones de CPU y memoria durante un build completo y con Sonar en funcionamiento.
+El piloto deja demostrada la cadena completa: un push a `main` pasó por pruebas, análisis, puerta de calidad, construcción, publicación y despliegue en 77 segundos, y `/version` devolvió el mismo commit que se había empujado. El proceso tarda menos de dos minutos y permite responder en cualquier momento qué código está corriendo.
 
-SQLite usa WAL, `synchronous=FULL`, transacciones `BEGIN IMMEDIATE` y espera de bloqueo. Las dos réplicas deben compartir un filesystem local con permisos de escritura para UID/GID 10001, incluyendo archivos WAL y SHM. No propongo NFS para este diseño. Un PVC persistente no es una copia de seguridad y no hay restauración demostrada. El marcador `NOT_READY` sobre el volumen compartido puede afectar a ambas réplicas; una simulación debe prever ese alcance.
+Las pruebas de comportamiento fueron las que más nos enseñaron. Probamos el pipeline en sus dos resultados posibles: la puerta rechazó código con 37.7 % de cobertura aunque las 35 pruebas pasaran, y el despliegue de una imagen inexistente terminó con el Deployment de vuelta en la versión que servía, sin intervención manual. Diseñar esas pruebas nos tomó más tiempo que armar el camino exitoso.
 
-El primer intento de la prueba de rollback automático falló, y eso resultó más útil que si hubiera pasado de inmediato: descubrió un defecto latente en el repositorio. El SHA candidato de ese intento era todo dígitos. Al sustituirse sin comillas en el manifiesto, el valor se interpretó como número YAML y el API server rechazó el apply con `unrecognized type: string`. El dry-run de servidor de `deploy.sh` lo detectó antes de tocar el clúster: el script salió 1, no cambió nada y las dos réplicas siguieron en pie. Es decir, el fallo se comportó como debía, pero por la razón equivocada.
+El umbral de cobertura quedó en 60 %, por debajo del 93.94 % que mide la aplicación hoy. La holgura deja margen para agregar código nuevo sin romper el build en cada cambio, y mantiene la puerta activa en lugar de convertirla en un trámite que el equipo termine desactivando.
 
-La corrección va en la sustitución y no en el manifiesto fuente, porque kustomize quita las comillas del origen: `scripts/deploy.sh` inyecta ahora los valores entre comillas. Quedó verificada parseando el YAML renderizado, donde `git-sha`, la anotación de versión y la etiqueta de versión salen como `str`. Un SHA real de Git casi siempre trae letras, así que el defecto podía sobrevivir indefinidamente sin manifestarse; de ahí que lo registre como hallazgo y no como simple ajuste de formato.
+El piloto tiene límites claros. El clúster tiene un solo nodo, así que las dos réplicas protegen contra la caída de un pod, no contra la de la máquina. El PVC funciona como almacenamiento, sin respaldo ni restauración probada. La reversión devuelve el Deployment y deja la base de datos como está. El monitoreo vive en la misma VM que vigila, y si esa máquina se detiene se pierde la visibilidad hasta que vuelva. Llevar esto a un servicio clínico real pediría al menos un segundo nodo, respaldo con restauración probada y una revisión de los permisos que hoy tiene el pipeline.
 
-El Dockerfile de aplicación tiene dos etapas y termina con usuario no root `10001:10001`. El manifiesto agrega raíz de solo lectura, eliminación de capabilities y token de ServiceAccount sin montaje automático. Cada réplica solicita 100m de CPU y 128 Mi de memoria, con límites de 500m y 256 Mi. Estos son límites declarados, no consumo observado.
+Quedan pendientes tres cosas de la entrega: los nombres y roles de los integrantes, el video de respaldo de 10 a 15 minutos, y la primera ejecución del job `medisur-branches` con un push real de rama. Y las dos desviaciones a confirmar con el docente: el disco de 30 GB del clúster y su Ubuntu 24.04.
 
-La identidad `jenkins-deployer` está limitada al namespace `medisur`: puede modificar deployments, services y configmaps, y leer los objetos necesarios para verificar. No tiene lectura directa de Secrets ni escritura de RBAC en el manifiesto. Aun así, poder modificar un Deployment puede permitir acceso indirecto a secretos montables en ese namespace. No equivale a aislamiento frente a un pipeline hostil.
+## 13. Anexos
 
-La credencial de GitHub autorizada durante la instalación también se utiliza para GHCR y el relay de alertas. Tiene permisos de repositorio y publicación de paquetes: el Secret `ghcr-pull` no contiene una credencial de solo lectura. Separar estas funciones con credenciales de menor alcance queda como mejora de seguridad; no lo presento como privilegio mínimo completo. La reversión implementada restaura el Deployment, no los datos ni cambios independientes de Service; eso quedó confirmado en la prueba negativa, donde el rollback devolvió la imagen anterior sin tocar la base. Una reconstrucción del mismo commit puede volver a publicar su etiqueta; para producción fijaría además el digest de la imagen.
+Repositorio del proyecto: https://github.com/SergioMultimedios/medisur-cicd
 
-Hay dos riesgos adicionales de administración. Jenkins monta el socket Docker, cuyo acceso equivale en la práctica a control privilegiado de la VM de herramientas; no deben ejecutarse Jenkinsfiles de autores no confiables. La identidad de monitoreo tiene `get pods/proxy` y `get nodes/proxy`: el primero no se restringe a `/metrics` y el segundo concede acceso al kubelet más amplio que métricas. Son concesiones de laboratorio que deben revisarse, no presentarse como permisos exclusivamente de observación.
+Video de respaldo de 10 a 15 minutos: [completar]
 
-Las IP privadas no sustituyen reglas de red. Debe verificarse el filtrado efectivo de 9100, 30080, 30081 y 16443, así como el acceso SSH. Los secretos de Compose son archivos montados, no un almacén cifrado. Ni PAT, kubeconfig, claves SSH ni contraseñas deben aparecer en Git, comandos de entrega, capturas o video.
+### Contenido del repositorio
 
-## 11. Costos y controles de consumo
+| Ruta | Contenido |
+| --- | --- |
+| `app/` | La API en Flask con sus seis endpoints |
+| `tests/` | Las 35 pruebas unitarias de la aplicación |
+| `Dockerfile` | Construcción de dos etapas de la imagen de ejecución |
+| `Jenkinsfile` | El pipeline declarativo con sus comentarios por etapa |
+| `scripts/deploy.sh`, `scripts/verify.sh` | Despliegue con reversión automática y prueba de humo |
+| `k8s/` | Namespace, Deployment, Services, PVC, ConfigMap y RBAC |
+| `infra/tools/` | Compose de Jenkins, SonarQube, PostgreSQL, Prometheus y Grafana |
+| `infra/monitoring/` | Configuración de Prometheus, reglas de alerta y tableros de Grafana |
+| `infra/alerting/`, `infra/alert-relay/` | Alertmanager y el servicio que abre y cierra incidencias |
+| `infra/credentials/` | Renovación horaria de las credenciales del clúster |
+| `infra/azure/budget.json` | Definición del presupuesto de 50 USD con sus avisos |
+| `docs/evidence/` | Las siete capturas y los registros de las pruebas de comportamiento |
+| `docs/architecture.drawio` | Diagrama de arquitectura editable |
 
-La consulta de costos Azure del 19/11/2026, comunicada por el responsable, reporta gasto acumulado del mes (MTD): discos 3.2632853475 USD e IP 2.22 USD, para un total de 5.4832853475 USD. No es saldo de créditos. Los cargos recientes de herramientas aún no aparecen por latencia de facturación; la ausencia de un cargo no significa que el recurso sea gratuito. Esta edición no repitió la consulta.
+### Referencias
 
-| Concepto | Importe o condición | Interpretación |
-| --- | --- | --- |
-| Discos, gasto MTD reportado | 3.2632853475 USD | Consulta al 19/11/2026; no incluye todos los cargos recientes |
-| IP, gasto MTD reportado | 2.22 USD | Mismo corte de consulta |
-| Total MTD reportado | `3.2632853475 + 2.22 = 5.4832853475 USD` | Gasto acumulado visible; no crédito disponible ni costo final |
-| Cómputo de `medisur-tools` | 0.192 USD/h de referencia | Separado del gasto observado; falta conciliar cargos tardíos y horas facturadas |
-| Ejemplo de 8 horas al día por 20 días | `0.192 × 8 × 20 = 30.72 USD` | Escenario ilustrativo de esa VM; no horario real observado |
-| Ejemplo continuo de 30 días | `0.192 × 24 × 30 = 138.24 USD` | Solo cómputo de D4s_v4; rebasa por sí solo el presupuesto |
-| Otros cargos aún no reflejados | Sin importe final conciliado | El total reportado no cierra el costo del proyecto ni separa todo el incremento de herramientas |
-| Presupuesto de `LAB-03` | 50 USD mensuales | Creado con aprobación del usuario; no constituye un tope duro |
+Consigna del proyecto final de la materia Cómputo en la Nube, caso MediSur, S.A. de C.V., publicada en la wiki del curso: [completar].
 
-`infra/azure/budget.json` filtra el grupo `LAB-03`, con periodo del 1 de noviembre de 2026 al 1 de febrero de 2027 y alertas de gasto real al 80 % y 100 %. El destinatario configurado es `sergio.navarro@multimedios.com`. Los umbrales equivalen a 40 y 50 USD, pero no acreditan que se haya enviado un correo. Al reutilizar el grupo, el presupuesto incluye sus recursos anteriores; no separa automáticamente el incremento de este proyecto.
-
-Ambas VM tienen apagado programado a las 05:00 UTC, según la confirmación del encargo. Para la zona centro de México, UTC-6, corresponde a las 23:00 del día anterior. Es una hora de apagado, no 23 horas de uso, ni un encendido automático. La reducción efectiva de cómputo depende de la desasignación; los discos y otros recursos pueden seguir generando cargos.
-
-Para el cierre falta conciliar los cargos tardíos por recurso y periodo, distinguir recursos nuevos de preexistentes y comprobar la desasignación tras el apagado. El presupuesto y ambos apagados ya están configurados y no requieren entrar al portal para funcionar. No propongo eliminar el grupo completo: `LAB-03` ya existía y puede contener recursos ajenos a esta práctica.
-
-## 12. Conclusiones y límites
-
-El build 4 relaciona el commit `7c42b65a94e87f2e8c115c91d702226bd1ee1da7` con una imagen y una versión servida por dos réplicas, en 76 s desde el push; el build 3 aporta el desglose de siete etapas y 35 pruebas, y el build 2 conserva el antecedente del primer éxito por push GitHub. La validación automatizada satisface las comprobaciones registradas. La demostración negativa aporta un resultado distinto: las pruebas pueden pasar y el gate detener el pipeline por cobertura de 37.7 %, inferior al 60 % exigido. Aprobar el gate de la aplicación tampoco significa ausencia de defectos: queda un code smell.
-
-La recuperación aprobada mide 21.623 s para volver a dos pods listos y 46.206 s para el rollback manual. Las 51 muestras HTTP no registraron fallos, pero no cubren todos los clientes ni todo el rollback. El bloqueo de conectividad anterior quedó resuelto tras la actualización NSG comunicada; ambos artefactos conservan la trazabilidad. La protección de `main` continúa sin resolver: una convención escrita no sustituye un bloqueo efectivo.
-
-La reversión automática dejó de ser una promesa del código. Con una imagen candidata inexistente, `deploy.sh` salió 1 a los 182 s y devolvió el Deployment al SHA anterior, con 36 muestras HTTP sin fallos y los dos pods viejos sirviendo todo el tiempo observado. Lo que más aprendí, sin embargo, salió del intento que falló: un SHA de solo dígitos rompía el apply porque el valor se sustituía sin comillas y YAML lo leía como número. Ese defecto llevaba ahí desde el principio y ningún despliegue exitoso lo habría revelado, porque los SHA reales suelen traer letras. Provocar el fallo sirvió para encontrarlo.
-
-Las dos réplicas no eliminan la dependencia del nodo ni del disco. La prueba de reversión usó una sola causa, el pull de imagen fallido, y no hay restauración de datos demostrada. Para un servicio clínico, esta arquitectura y sus permisos necesitarían otra evaluación; no basta con aumentar réplicas. El cierre escolar requiere además revisión humana, video, integrantes, roles, el primer run real del job de ramas y aprobación docente de las desviaciones.
-
-## 13. Anexos y pendientes de integración
-
-### A. Fuentes utilizadas y entregables
-
-La base técnica del reporte incluye `app/`, `tests/`, XML de `tests/reports/`, `Dockerfile`, requisitos, `pyproject.toml`, `sonar-project.properties`, `Jenkinsfile`, scripts, `k8s/`, `infra/tools/`, `infra/monitoring/`, `infra/alert-relay/` e `infra/azure/budget.json`. Las fuentes de resultados son [live-validation.json](live-validation.json), [quality-gate.json](quality-gate.json), [recovery.json](evidence/recovery.json), [recovery-verified.json](evidence/recovery-verified.json) y [automatic-rollback.json](evidence/automatic-rollback.json); la renovación se documenta en [`infra/credentials/`](../infra/credentials/). Los hechos de Azure, actualización NSG para la IP del operador, webhook, privacidad GHCR, cotejo de plugins, renovación horaria, issue sintético, build 4 con su push y 99 pruebas Python más 10 mocks shell proceden de la verificación comunicada; no se les atribuye una consulta o ejecución nueva en esta edición.
-
-El [README del proyecto](../README.md) contiene preparación local, acceso SSH, scripts de encendido/desasignación y comprobaciones de operación. El [README del relay](../infra/alert-relay/README.md) describe permisos, reintentos y límites. El repositorio privado https://github.com/SergioMultimedios/medisur-cicd ya contiene el push observado; falta confirmar acceso docente. Video, revisión e integración de capturas finales y copia de la wiki de CI/CD: pendientes.
-
-En `docs/evidence/` están las siete capturas reales: `jenkins-main-build-3.png`, `jenkins-main-stages.png`, `jenkins-quality-demo-tests.png`, `sonar-medisur-cicd.png`, `sonar-medisur-quality-demo.png`, `grafana-medisur-infrastructure.png` y `grafana-medisur-application.png`. Solo se comprobó su presencia: no se certifican aquí contenido, legibilidad, saneamiento ni finalización del trabajo de capturas. Las de Jenkins corresponden al build 3, anterior al 4. Esas revisiones siguen abiertas antes de incorporarlos a Word o al video.
-
-Existen [reporte.docx](reporte.docx), [architecture.png](architecture.png) y el [diagrama editable architecture.drawio](architecture.drawio). Su existencia no acredita que incorporen este corte. El Mermaid del reporte ya refleja las integraciones configuradas; el flujo principal actualizará el diagrama físico y regenerará Word con `scripts/render-report.py`, con revisión posterior de maquetación. Esta edición se limita a `README.md` y `docs/reporte.md`.
-
-### B. TODO documental para el cierre del despliegue
-
-Las casillas marcadas indican hechos ya documentados; las abiertas son pendientes del cierre. Esta lista no autoriza cambios adicionales por sí misma.
-
-- [ ] Completar portada, integrantes, roles y registro de revisión humana del uso de IA.
-- [ ] Cotejar los trece títulos con la wiki y obtener aprobación docente de Ubuntu, tamaños y discos.
-- [ ] Incorporar evidencia fechada de las VM, almacenamiento, RBAC, red, presupuesto y apagados.
-- [x] Documentar build 4, commit `7c42b65a94e87f2e8c115c91d702226bd1ee1da7` empujado a `main` privado, webhook, `SUCCESS` en 76 s, imagen privada, dos réplicas listas y `/version` coincidente; conservar builds 3 y 2 como historia.
-- [x] Registrar webhook público HTTPS, ping/push 200 y acceso administrativo y de aplicación por túneles privados.
-- [x] Corregir la discrepancia documental de Sonar: Jenkinsfile y JCasC ya usan `SonarQube`; gate observado `OK`.
-- [x] Documentar Compose separado de alertas, destino Prometheus e issue sintético `TEST` #1 abierto y cerrado automáticamente.
-- [x] Incorporar gasto MTD comunicado de 5.4832853475 USD, separado de crédito y de cargos tardíos de herramientas.
-- [ ] Resolver el 403 de protección de `main`, que exige Pro o repositorio público, o documentar dispensa aceptada; no declarar protección mientras no exista.
-- [x] Registrar cotejo comunicado de Jenkins 2.580.2: 85/85 plugins activos, habilitados y con versiones exactas, sin discrepancias.
-- [ ] Adjuntar constancia saneada del cotejo y registrar versiones efectivas faltantes de Docker, Compose y SQLite.
-- [x] Incorporar recolección `success: true`, sin errores ni fallos, con 35 pruebas, etapas exitosas y series de tasas/CPU/memoria.
-- [x] Documentar demo 2: 35 pruebas aprobadas, análisis Sonar exitoso, cobertura 37.7 % < 60 %, gate `ERROR` y `Would publish` omitida; distinguir la representación `FAILED` de la API.
-- [x] Documentar renovación horaria activa, última renovación 18:17:09 UTC, tokens de 24 horas y ocho pruebas focalizadas aprobadas según verificación comunicada.
-- [x] Registrar 99 pruebas Python y 10 mocks shell aprobados según el flujo principal, separados de las 35 pruebas del build.
-- [x] Conservar el ensayo histórico `blocked` y documentar su resolución: actualización NSG comunicada y ensayo local posterior `passed`.
-- [x] Documentar recuperación de pod en 21.623 s, 51 HTTP exitosas/0 fallidas y rollback manual en 46.206 s con restitución de la revisión 4.
-- [x] Probar rollback automático ante un rollout fallido en vivo: job aislado `medisur-rollout-demo` build 1, imagen candidata inexistente, `deploy.sh` con código 1 a los 182 s, revisión 4 → 6 con el SHA inicial, 36 muestras HTTP sin fallos, checksums atestados y configuración de `medisur-main` sin cambio.
-- [x] Registrar el defecto encontrado en el primer intento —SHA de solo dígitos leído como número YAML— y su corrección verificada con comillas en la sustitución de `scripts/deploy.sh`.
-- [ ] Ejercitar `medisur-branches` con un push real de rama y adjuntar su resultado y el proyecto Sonar `medisur-feature-ci`.
-- [ ] Adjuntar digest GHCR y evidencia fechada del volumen; probar persistencia y restauración de backup sin confundirlas con recuperación de pod o rollback de aplicación.
-- [ ] Adjuntar capturas finales de dashboards; las series CPU/tasas ya existen. Revisar permisos proxy sin exponer secretos ni llamar incidente real a la prueba sintética.
-- [ ] Conciliar gasto por recurso y periodo cuando aparezcan cargos tardíos; conservar separados los ejemplos de tarifa y comprobar desasignación programada.
-- [ ] Regenerar `docs/reporte.docx` desde el flujo principal tras estos cambios, revisar Word y coordinar la actualización de leyendas de PNG/drawio fuera de esta edición.
-- [ ] Incorporar el video de 10 a 15 minutos y capturas saneadas; revisar las conclusiones, completar nombres, roles y revisión humana sin atribuciones ficticias.
+Documentación consultada de Jenkins, SonarQube, Prometheus, Grafana, MicroK8s y Azure, en sus versiones correspondientes a las instaladas y declaradas en la sección 4.

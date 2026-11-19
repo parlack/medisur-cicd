@@ -305,7 +305,7 @@ def create_document(markdown, png, destination, created, evidence=()):
         document.styles[name].font.name = "Calibri"
         document.styles[name].font.size = Pt(11)
     header = section.header.paragraphs[0]
-    header.add_run("MediSur CI/CD | BORRADOR ESCOLAR").font.size = Pt(9)
+    header.add_run("MediSur | Piloto de integración y despliegue continuo").font.size = Pt(9)
     footer = section.footer.paragraphs[0]
     footer.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     footer.add_run(f"Generado: {created:%d/%m/%Y} | Página ").font.size = Pt(9)
@@ -316,7 +316,7 @@ def create_document(markdown, png, destination, created, evidence=()):
     document.core_properties.modified = document.core_properties.created
     document.core_properties.author = ""
     document.core_properties.title = "MediSur: piloto de integración y despliegue continuo"
-    document.core_properties.subject = "BORRADOR ESCOLAR; evidencias y pendientes conservados del Markdown"
+    document.core_properties.subject = "Cómputo en la Nube; evidencias y pendientes conservados del Markdown"
     update = OxmlElement("w:updateFields")
     update.set(qn("w:val"), "true")
     document.settings.element.append(update)
@@ -356,7 +356,7 @@ def create_document(markdown, png, destination, created, evidence=()):
                 heading_count += 1
         elif kind == "heading_close":
             if first_h1 and token.tag == "h1":
-                document.add_paragraph("BORRADOR ESCOLAR", style="Subtitle")
+                document.add_paragraph("Cómputo en la Nube", style="Subtitle")
                 document.add_paragraph(f"Fecha de generación: {created:%d/%m/%Y %H:%M %z}")
                 first_h1 = False
             paragraph = None
@@ -507,8 +507,8 @@ def validate_docx(path, markdown, counts, png, evidence=()):
             if name.endswith((".xml", ".rels")):
                 check_secrets(archive.read(name).decode("utf-8"))
         header = ET.fromstring(archive.read("word/header1.xml"))
-        if "BORRADOR" not in "".join(header.itertext()):
-            raise ValueError("Missing draft header")
+        if "MediSur" not in "".join(header.itertext()):
+            raise ValueError("Missing document header")
         footer = ET.fromstring(archive.read("word/footer1.xml"))
         fields = [node.text.strip() for node in footer.findall(".//w:instrText", NS)]
         if fields != ["PAGE", "NUMPAGES"]:
