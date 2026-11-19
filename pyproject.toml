@@ -1,0 +1,20 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers --cov=app --cov-branch --cov-report=term-missing --cov-report=xml:tests/reports/coverage.xml --cov-fail-under=60 --junitxml=tests/reports/junit.xml"
+junit_family = "xunit2"
+cache_dir = "tests/.pytest_cache"
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+relative_files = true
+data_file = "tests/reports/.coverage"
+
+[tool.coverage.report]
+fail_under = 60
+show_missing = true
+
+[tool.coverage.xml]
+output = "tests/reports/coverage.xml"

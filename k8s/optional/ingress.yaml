@@ -1,0 +1,18 @@
+# Optional: apply only after installing/enabling an ingress controller.
+# Set ingressClassName to that controller's actual class if it has no default.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: medisur
+  namespace: medisur
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: medisur
+                port:
+                  number: 80

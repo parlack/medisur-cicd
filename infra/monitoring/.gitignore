@@ -1,0 +1,5 @@
+secrets/
+*.crt
+*.key
+*-token
+__pycache__/

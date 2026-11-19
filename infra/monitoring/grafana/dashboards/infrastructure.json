@@ -1,0 +1,75 @@
+{
+  "uid": "medisur-infrastructure",
+  "title": "Medisur - Infrastructure",
+  "tags": ["medisur", "infrastructure"],
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": false,
+  "timezone": "browser",
+  "refresh": "30s",
+  "time": {"from": "now-1h", "to": "now"},
+  "templating": {"list": []},
+  "annotations": {"list": []},
+  "panels": [
+    {
+      "id": 1, "title": "Scrape health (1 = up)", "type": "timeseries",
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "medisur-prometheus"},
+      "fieldConfig": {"defaults": {"min": 0, "max": 1}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "up", "legendFormat": "{{job}} / {{instance}}"}]
+    },
+    {
+      "id": 2, "title": "Host CPU used", "type": "timeseries",
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "medisur-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "100 * (1 - avg by (node) (rate(node_cpu_seconds_total{job=\"node\",mode=\"idle\"}[$__rate_interval])))", "legendFormat": "{{node}}"}]
+    },
+    {
+      "id": 3, "title": "Host memory used", "type": "timeseries",
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "medisur-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=\"node\"} / node_memory_MemTotal_bytes{job=\"node\"})", "legendFormat": "{{node}}"}]
+    },
+    {
+      "id": 4, "title": "Filesystem used (available-space basis)", "type": "timeseries",
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "medisur-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "percent", "min": 0, "max": 100, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 80}]}}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "100 * (1 - node_filesystem_avail_bytes{job=\"node\",fstype!~\"tmpfs|overlay|squashfs|nsfs|ramfs\"} / node_filesystem_size_bytes{job=\"node\",fstype!~\"tmpfs|overlay|squashfs|nsfs|ramfs\"})", "legendFormat": "{{node}} {{mountpoint}}"}]
+    },
+    {
+      "id": 5, "title": "Deployment ready / desired replicas", "type": "timeseries",
+      "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "medisur-prometheus"},
+      "fieldConfig": {"defaults": {"min": 0, "decimals": 0}, "overrides": []},
+      "targets": [
+        {"refId": "A", "expr": "kube_deployment_status_replicas_ready{namespace=\"medisur\",job=\"kube-state-metrics\"}", "legendFormat": "{{deployment}} ready"},
+        {"refId": "B", "expr": "kube_deployment_spec_replicas{namespace=\"medisur\",job=\"kube-state-metrics\"}", "legendFormat": "{{deployment}} desired"}
+      ]
+    },
+    {
+      "id": 6, "title": "Container restarts / 10 minutes", "type": "timeseries",
+      "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "medisur-prometheus"},
+      "fieldConfig": {"defaults": {"min": 0}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"medisur\",job=\"kube-state-metrics\"}[10m]))", "legendFormat": "{{pod}}"}]
+    },
+    {
+      "id": 7, "title": "Prometheus storage blocks + head chunks", "type": "timeseries",
+      "description": "Retention is 15 days or 4GB, whichever removes blocks first. WAL/head and compaction need extra disk; 4GB is not a filesystem quota.",
+      "gridPos": {"x": 0, "y": 24, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "medisur-prometheus"},
+      "fieldConfig": {"defaults": {"unit": "bytes", "min": 0}, "overrides": []},
+      "targets": [{"refId": "A", "expr": "prometheus_tsdb_storage_blocks_bytes + prometheus_tsdb_head_chunks_storage_size_bytes", "legendFormat": "Stored blocks + head chunks (excludes WAL)"}]
+    },
+    {
+      "id": 8, "title": "Active local alerts", "type": "table",
+      "description": "No Alertmanager or external notification receiver is configured.",
+      "gridPos": {"x": 12, "y": 24, "w": 12, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "medisur-prometheus"},
+      "targets": [{"refId": "A", "expr": "ALERTS{alertstate=\"firing\"}", "instant": true, "format": "table"}]
+    }
+  ]
+}

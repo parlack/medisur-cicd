@@ -1,0 +1,16 @@
+**
+!requirements.txt
+!requirements-dev.txt
+!pyproject.toml
+!app/
+!app/**
+!tests/
+!tests/**
+app/**/__pycache__/
+app/**/*.pyc
+tests/**/__pycache__/
+tests/**/*.pyc
+tests/.venv/
+tests/.tmp/
+tests/.pytest_cache/
+tests/reports/

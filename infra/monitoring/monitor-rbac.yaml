@@ -1,0 +1,66 @@
+# Integration manifest for the main agent; NOT applied by tools setup.
+# Namespace medisur must already exist. No token or default credential is stored.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus-tools
+  namespace: medisur
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-tools
+  namespace: medisur
+rules:
+  - apiGroups: [""]
+    resources: [pods, services, endpoints]
+    verbs: [get, list, watch]
+  # Lab tradeoff: proxy GET access is not restricted to /metrics and can reach
+  # other pod HTTP endpoints in this namespace. Never reuse as a deploy token.
+  - apiGroups: [""]
+    resources: [pods/proxy]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-tools
+  namespace: medisur
+subjects:
+  - kind: ServiceAccount
+    name: prometheus-tools
+    namespace: medisur
+roleRef:
+  kind: Role
+  name: prometheus-tools
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: medisur-prometheus-cadvisor
+rules:
+  - apiGroups: [""]
+    resources: [nodes]
+    verbs: [get, list, watch]
+  # SECURITY: nodes/proxy grants powerful kubelet access, beyond metrics-only
+  # authorization. Accepted lab integration only; for production use direct
+  # kubelet /metrics/cadvisor with nodes/metrics and verified kubelet TLS.
+  # Remove this rule AND the cadvisor job if this risk is not accepted.
+  - apiGroups: [""]
+    resources: [nodes/proxy]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: medisur-prometheus-cadvisor
+subjects:
+  - kind: ServiceAccount
+    name: prometheus-tools
+    namespace: medisur
+roleRef:
+  kind: ClusterRole
+  name: medisur-prometheus-cadvisor
+  apiGroup: rbac.authorization.k8s.io

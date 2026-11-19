@@ -1,0 +1,14 @@
+# The sole scraper identity and proxy grants are defined in
+# infra/monitoring/monitor-rbac.yaml, applied by bootstrap-cluster.sh.
+# This optional issuer role has NO binding: scraper credentials cannot renew
+# themselves. The installed root-owned renewal service uses local MicroK8s.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-token-issuer
+  namespace: medisur
+rules:
+  - apiGroups: ['']
+    resources: [serviceaccounts/token]
+    resourceNames: [prometheus-tools]
+    verbs: [create]

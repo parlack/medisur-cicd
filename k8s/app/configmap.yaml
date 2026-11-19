@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: medisur-config-v1
+immutable: true
+data:
+  DATA_DIR: /data
+  SQLITE_BUSY_TIMEOUT_MS: '5000'
+  PORT: '8000'
+# VERSION, GIT_SHA and BUILD_DATE come exclusively from image build arguments.
+# For configuration changes, create a new immutable name and retain the old
+# ConfigMap so old ReplicaSets still work during rollback.

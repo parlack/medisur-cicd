@@ -1,0 +1,13 @@
+{
+  "properties": {
+    "category": "Cost",
+    "amount": 50,
+    "timeGrain": "Monthly",
+    "timePeriod": {"startDate": "2026-11-01T00:00:00Z", "endDate": "2027-02-01T00:00:00Z"},
+    "filter": {"dimensions": {"name": "ResourceGroupName", "operator": "In", "values": ["LAB-03"]}},
+    "notifications": {
+      "Actual80Percent": {"enabled": true, "operator": "GreaterThanOrEqualTo", "threshold": 80, "thresholdType": "Actual", "contactEmails": ["sergio.navarro@multimedios.com"]},
+      "Actual100Percent": {"enabled": true, "operator": "GreaterThanOrEqualTo", "threshold": 100, "thresholdType": "Actual", "contactEmails": ["sergio.navarro@multimedios.com"]}
+    }
+  }
+}

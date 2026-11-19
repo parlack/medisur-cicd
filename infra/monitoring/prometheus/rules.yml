@@ -1,0 +1,42 @@
+groups:
+  - name: medisur-lab
+    rules:
+      - alert: DiskUsageAbove80Percent
+        expr: >-
+          (100 * (1 - node_filesystem_avail_bytes{job="node",fstype!~"tmpfs|overlay|squashfs|nsfs|ramfs"}
+          / node_filesystem_size_bytes{job="node",fstype!~"tmpfs|overlay|squashfs|nsfs|ramfs"}) > 80)
+          and on(instance, device, mountpoint) (node_filesystem_readonly{job="node"} == 0)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Disk usage above 80% on {{ $labels.instance }}'
+          description: '{{ $labels.mountpoint }} has {{ $value | printf "%.1f" }}% space unavailable.'
+      - alert: MedisurFrequentRestarts
+        expr: sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace="medisur",job="kube-state-metrics"}[10m])) > 3
+        labels:
+          severity: warning
+        annotations:
+          summary: 'More than three restarts in ten minutes: {{ $labels.pod }}'
+      - alert: MedisurReplicasNotReady
+        expr: kube_deployment_status_replicas_ready{namespace="medisur",job="kube-state-metrics"} < kube_deployment_spec_replicas{namespace="medisur",job="kube-state-metrics"}
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Ready replicas below desired for five minutes: {{ $labels.deployment }}'
+      - alert: MonitoringTargetDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Scrape target unavailable: {{ $labels.job }} / {{ $labels.instance }}'
+      - alert: MedisurDiscoveryEmpty
+        expr: absent(up{job="medisur"})
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: No Medisur pod targets discovered
+          description: Check token expiry, RBAC, service annotation, port name, and running pods.

@@ -1,0 +1,30 @@
+# Administrator prerequisites: enable MicroK8s dns + hostpath-storage; label
+# only the node at 172.16.0.4 with medisur.io/sqlite-node=true before deploying.
+# The hostpath volume is single-node storage, not replication or a backup.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: medisur
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: medisur-app
+  namespace: medisur
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: medisur-data
+  namespace: medisur
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: microk8s-hostpath
+  resources:
+    requests:
+      storage: 2Gi

@@ -1,0 +1,32 @@
+jenkins:
+  systemMessage: "Medisur school lab. Docker socket access grants host-root-equivalent privileges."
+  # One trusted lab build at a time; no separate agent is provisioned here.
+  numExecutors: 1
+  labelString: medisur-ci
+  mode: NORMAL
+  slaveAgentPort: -1
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "${JENKINS_ADMIN_ID}"
+          password: "${jenkins_admin_password}"
+  authorizationStrategy:
+    globalMatrix:
+      entries:
+        - user:
+            name: "${JENKINS_ADMIN_ID}"
+            permissions:
+              - "Overall/Administer"
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: false
+unclassified:
+  location:
+    url: "${JENKINS_URL}"
+  sonarGlobalConfiguration:
+    installations:
+      - name: SonarQube
+        serverUrl: http://sonarqube:9000
+        # Create this Secret text credential after rotating Sonar's initial login.
+        credentialsId: sonar-token

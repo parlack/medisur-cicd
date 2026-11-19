@@ -1,0 +1,45 @@
+# Apply once using an administrator, never the pipeline identity.
+# Kubernetes Deployment write access can indirectly expose mounted secrets.
+# This role is confined to the dedicated application namespace, not a sandbox.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jenkins-deployer
+  namespace: medisur
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jenkins-deployer
+  namespace: medisur
+rules:
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list, watch, create, patch, update]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    verbs: [get, list, watch]
+  - apiGroups: ['']
+    resources: [services, configmaps]
+    verbs: [get, list, watch, create, patch, update]
+  - apiGroups: ['']
+    resources: [pods, events, endpoints]
+    verbs: [get, list, watch]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jenkins-deployer
+  namespace: medisur
+subjects:
+  - kind: ServiceAccount
+    name: jenkins-deployer
+    namespace: medisur
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: jenkins-deployer

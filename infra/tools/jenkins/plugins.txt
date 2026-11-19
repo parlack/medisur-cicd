@@ -1,0 +1,12 @@
+configuration-as-code:2036.v0b_c2de701dcb_
+matrix-auth:3.3
+workflow-aggregator:608.v67378e9d3db_1
+git:5.11.0
+github:1.47.0
+credentials-binding:728.v902a_273b_8947
+sonar:2.19.1
+pipeline-stage-view:2.41
+ws-cleanup:0.49
+junit:1335.v6b_a_a_e18534e1
+timestamper:1.30
+docker-workflow:647.vf474049b_b_303

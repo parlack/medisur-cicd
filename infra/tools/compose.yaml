@@ -1,0 +1,218 @@
+name: medisur-tools
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  jenkins:
+    image: medisur/jenkins:2.528.3-jdk21-tools1
+    build:
+      context: ./jenkins
+      args:
+        KUBECTL_VERSION: ${KUBECTL_VERSION:-v1.34.3}
+        KUBECTL_SHA256: ${KUBECTL_SHA256:-ab60ca5f0fd60c1eb81b52909e67060e3ba0bd27e55a8ac147cbc2172ff14212}
+    restart: unless-stopped
+    init: true
+    user: "1000:1000"
+    group_add:
+      - ${DOCKER_GID:?Set DOCKER_GID to the host docker socket group ID}
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      JAVA_OPTS: -Djenkins.install.runSetupWizard=false -Xms256m -Xmx1536m
+      CASC_JENKINS_CONFIG: /var/jenkins_home/casc/jenkins.yaml
+      SECRETS: /run/secrets
+      JENKINS_ADMIN_ID: ${JENKINS_ADMIN_ID:-medisur-admin}
+      JENKINS_URL: ${JENKINS_URL:-http://localhost:8080/}
+      SONAR_HOST_URL: http://sonarqube:9000
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - ./jenkins/jenkins.yaml:/var/jenkins_home/casc/jenkins.yaml:ro
+      # LAB ONLY: docker socket access is effectively root on the tools VM.
+      # Do not run untrusted pull requests or share this controller with production.
+      - /var/run/docker.sock:/var/run/docker.sock
+    secrets:
+      - jenkins_admin_password
+    mem_limit: 3g
+    cpus: 2.0
+    logging: *logging
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, http://localhost:8080/login]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+
+  postgres:
+    image: postgres:17.7-bookworm@sha256:86e0b703649d7a792bd9243ee28afc9d8f7c6b2b5638077c9d6882d4d472bbfd
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sonarqube
+      POSTGRES_USER: sonarqube
+      POSTGRES_PASSWORD_FILE: /run/secrets/sonar_db_password
+    secrets:
+      - sonar_db_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: [database]
+    mem_limit: 1g
+    cpus: 1.0
+    logging: *logging
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  sonarqube:
+    image: sonarqube:25.12.0.117093-community@sha256:4e55d47ba60c9db78793fa781c8f582a0c398a7fe8231da09575161a7636063a
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:9000:9000"
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonarqube
+      SONAR_FORCEAUTHENTICATION: "true"
+      SONAR_WEB_JAVAOPTS: -Xms256m -Xmx768m
+      SONAR_CE_JAVAOPTS: -Xms256m -Xmx768m
+      SONAR_SEARCH_JAVAOPTS: -Xms512m -Xmx512m
+    entrypoint: [/bin/bash, /opt/medisur/sonar-entrypoint.sh]
+    secrets:
+      - sonar_db_password
+    volumes:
+      - ./sonar-entrypoint.sh:/opt/medisur/sonar-entrypoint.sh:ro
+      - sonar_data:/opt/sonarqube/data
+      - sonar_extensions:/opt/sonarqube/extensions
+      - sonar_logs:/opt/sonarqube/logs
+    networks: [default, database]
+    ulimits:
+      nofile:
+        soft: 131072
+        hard: 131072
+      nproc: 8192
+    mem_limit: 4g
+    cpus: 2.0
+    logging: *logging
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS http://localhost:9000/api/system/status | grep -q ''"status":"UP"''']
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 180s
+
+  prometheus:
+    image: prom/prometheus:v3.8.0@sha256:d936808bdea528155c0154a922cd42fd75716b8bb7ba302641350f9f3eaeba09
+    restart: unless-stopped
+    user: "65534:65534"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --storage.tsdb.retention.size=4GB
+    ports:
+      - "127.0.0.1:9090:9090"
+    extra_hosts:
+      # Use the VM private address, not host-gateway: exporter only binds this IP.
+      - "host.docker.internal:${TOOLS_PRIVATE_IP:-172.16.0.5}"
+    volumes:
+      - ../monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../monitoring/prometheus/rules.yml:/etc/prometheus/rules.yml:ro
+      - prometheus_data:/prometheus
+    secrets:
+      - source: monitor_ca
+        target: monitor-ca.crt
+      - source: monitor_token
+        target: monitor-token
+    mem_limit: 1500m
+    cpus: 1.0
+    logging: *logging
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://localhost:9090/-/ready]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana:12.3.1@sha256:2175aaa91c96733d86d31cf270d5310b278654b03f5718c59de12a865380a31f
+    restart: unless-stopped
+    user: "472:472"
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-medisur-admin}
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_ALLOW_ORG_CREATE: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+    secrets:
+      - grafana_admin_password
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    mem_limit: 512m
+    cpus: 0.5
+    logging: *logging
+    healthcheck:
+      test: [CMD, wget, -q, --spider, http://localhost:3000/api/health]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  node-exporter:
+    # Azure public IP DNAT can still reach a private bind. Main agent must deny
+    # public TCP/9100 in the NSG; allow only trusted private monitoring traffic.
+    image: prom/node-exporter:v1.10.2@sha256:3ac34ce007accad95afed72149e0d2b927b7e42fd1c866149b945b84737c62c3
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    user: "65534:65534"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    command:
+      - --path.rootfs=/host
+      - --web.listen-address=${TOOLS_PRIVATE_IP:-172.16.0.5}:9100
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|var/lib/docker/.+|var/lib/kubelet/.+)($$|/)
+    volumes:
+      - /:/host:ro,rslave
+    mem_limit: 128m
+    cpus: 0.25
+    logging: *logging
+
+networks:
+  default:
+  database:
+    internal: true
+
+volumes:
+  jenkins_home:
+  postgres_data:
+  sonar_data:
+  sonar_extensions:
+  sonar_logs:
+  prometheus_data:
+  grafana_data:
+
+# Compose file secrets are bind mounts, not an encrypted secret store. Ownership
+# is set by initialize-secrets.sh; uid/gid/mode remapping is not relied upon.
+secrets:
+  jenkins_admin_password:
+    file: ${SECRETS_DIR:-/etc/medisur/secrets}/jenkins_admin_password
+  sonar_db_password:
+    file: ${SECRETS_DIR:-/etc/medisur/secrets}/sonar_db_password
+  grafana_admin_password:
+    file: ${SECRETS_DIR:-/etc/medisur/secrets}/grafana_admin_password
+  monitor_ca:
+    file: ${SECRETS_DIR:-/etc/medisur/secrets}/monitor-ca.crt
+  monitor_token:
+    file: ${SECRETS_DIR:-/etc/medisur/secrets}/monitor-token

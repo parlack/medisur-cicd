@@ -1,0 +1,72 @@
+rule_files:
+  - /etc/prometheus/rules.yml
+evaluation_interval: 1m
+tests:
+  - name: ready-below-desired-for-five-minutes
+    interval: 1m
+    input_series:
+      - series: kube_deployment_status_replicas_ready{namespace="medisur",job="kube-state-metrics",deployment="api"}
+        values: 1x10
+      - series: kube_deployment_spec_replicas{namespace="medisur",job="kube-state-metrics",deployment="api"}
+        values: 2x10
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: MedisurReplicasNotReady
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: MedisurReplicasNotReady
+        exp_alerts:
+          - exp_labels:
+              namespace: medisur
+              job: kube-state-metrics
+              deployment: api
+              severity: critical
+            exp_annotations:
+              summary: 'Ready replicas below desired for five minutes: api'
+  - name: exactly-three-restarts-does-not-alert
+    interval: 1m
+    input_series:
+      - series: kube_pod_container_status_restarts_total{namespace="medisur",job="kube-state-metrics",pod="api-1",container="app"}
+        values: 0 0 0 0 0 0 0 0 0 3
+    alert_rule_test:
+      - eval_time: 9m
+        alertname: MedisurFrequentRestarts
+        exp_alerts: []
+  - name: more-than-three-restarts-alerts
+    interval: 1m
+    input_series:
+      - series: kube_pod_container_status_restarts_total{namespace="medisur",job="kube-state-metrics",pod="api-1",container="app"}
+        values: 0+1x10
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: MedisurFrequentRestarts
+        exp_alerts:
+          - exp_labels:
+              namespace: medisur
+              pod: api-1
+              severity: warning
+            exp_annotations:
+              summary: 'More than three restarts in ten minutes: api-1'
+  - name: disk-over-eighty-percent
+    interval: 1m
+    input_series:
+      - series: node_filesystem_avail_bytes{job="node",instance="tools",device="sda",mountpoint="/",fstype="ext4"}
+        values: 19x10
+      - series: node_filesystem_size_bytes{job="node",instance="tools",device="sda",mountpoint="/",fstype="ext4"}
+        values: 100x10
+      - series: node_filesystem_readonly{job="node",instance="tools",device="sda",mountpoint="/",fstype="ext4"}
+        values: 0x10
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: DiskUsageAbove80Percent
+        exp_alerts:
+          - exp_labels:
+              job: node
+              instance: tools
+              device: sda
+              mountpoint: /
+              fstype: ext4
+              severity: warning
+            exp_annotations:
+              summary: Disk usage above 80% on tools
+              description: / has 81.0% space unavailable.

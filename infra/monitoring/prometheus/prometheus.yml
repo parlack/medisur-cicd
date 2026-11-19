@@ -1,0 +1,125 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    environment: medisur-lab
+
+rule_files:
+  - /etc/prometheus/rules.yml
+
+# No Alertmanager or webhook URL: alerts are visible locally, never sent out.
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: [localhost:9090]
+
+  - job_name: node
+    static_configs:
+      - targets: [host.docker.internal:9100]
+        labels:
+          node: tools
+      - targets: [172.16.0.4:9100]
+        labels:
+          node: k8s
+
+  - job_name: kube-state-metrics
+    static_configs:
+      - targets: [172.16.0.4:30080]
+
+  - job_name: medisur
+    scheme: https
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/monitor-token
+    tls_config:
+      ca_file: /run/secrets/monitor-ca.crt
+      insecure_skip_verify: false
+    kubernetes_sd_configs:
+      - role: endpoints
+        api_server: https://172.16.0.4:16443
+        namespaces:
+          names: [medisur]
+        authorization:
+          type: Bearer
+          credentials_file: /run/secrets/monitor-token
+        tls_config:
+          ca_file: /run/secrets/monitor-ca.crt
+          insecure_skip_verify: false
+    relabel_configs:
+      # Opt-in service, one named port, and running pods prevent duplicate
+      # counters. Not-ready running pods are still scraped during rollouts.
+      - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+        action: keep
+        regex: "true"
+      - source_labels: [__meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: http
+      - source_labels: [__meta_kubernetes_pod_phase]
+        action: keep
+        regex: Running
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: keep
+        regex: .+
+      - source_labels: [__meta_kubernetes_pod_container_port_number]
+        action: keep
+        regex: '[0-9]+'
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+      - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_version]
+        target_label: version
+      - source_labels: [version]
+        regex: ""
+        replacement: unknown
+        target_label: version
+      # Endpoint SD yields individual pod IP:ports. The API proxy avoids an
+      # unverified route from the tools VM into the MicroK8s pod CIDR.
+      # Requires get pods/proxy on this namespace. Never use the service NodePort
+      # for metrics: its load-balancing merges independent process counters.
+      - source_labels: [namespace, pod, __meta_kubernetes_pod_container_port_number]
+        separator: ";"
+        regex: '(.+);(.+);([0-9]+)'
+        target_label: __metrics_path__
+        replacement: /api/v1/namespaces/${1}/pods/${2}:${3}/proxy/metrics
+      - source_labels: [namespace, pod, __meta_kubernetes_pod_container_port_number]
+        separator: "/"
+        target_label: instance
+      - target_label: __address__
+        replacement: 172.16.0.4:16443
+
+  - job_name: kubernetes-cadvisor
+    scheme: https
+    metrics_path: /metrics/cadvisor
+    authorization:
+      type: Bearer
+      credentials_file: /run/secrets/monitor-token
+    tls_config:
+      ca_file: /run/secrets/monitor-ca.crt
+      insecure_skip_verify: false
+    kubernetes_sd_configs:
+      - role: node
+        api_server: https://172.16.0.4:16443
+        authorization:
+          type: Bearer
+          credentials_file: /run/secrets/monitor-token
+        tls_config:
+          ca_file: /run/secrets/monitor-ca.crt
+          insecure_skip_verify: false
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: node
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: instance
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: __metrics_path__
+        replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+      - target_label: __address__
+        replacement: 172.16.0.4:16443
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        action: keep
+        regex: container_cpu_usage_seconds_total|container_memory_working_set_bytes|container_memory_rss
+      - source_labels: [namespace]
+        action: keep
+        regex: medisur
