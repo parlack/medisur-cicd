@@ -1,0 +1,46 @@
+# Fragmento para incorporar a infra/tools/compose.yaml; rutas relativas a tools.
+services:
+  alert-relay:
+    build:
+      context: ../alert-relay
+    restart: unless-stopped
+    init: true
+    user: "10001:10001"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      GITHUB_REPOSITORY: SergioMultimedios/medisur-cicd
+      ALERT_RELAY_SECRET_FILE: /run/secrets/alert-relay-secret
+    secrets:
+      - source: github_token
+        target: github-token
+      - source: alert_relay_secret
+        target: alert-relay-secret
+    volumes:
+      - alert_relay_data:/data
+    networks: [alert_internal, relay_egress]
+    # Sin ports: no publicar el receptor en el host.
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  alert_internal:
+    internal: true
+  # Solo alert-relay: salida HTTPS a GitHub; internal:true impediria esa salida.
+  relay_egress:
+
+volumes:
+  alert_relay_data:
+
+secrets:
+  github_token:
+    file: ${SECRETS_DIR:-/etc/medisur/secrets}/github-token
+  alert_relay_secret:
+    file: ${SECRETS_DIR:-/etc/medisur/secrets}/alert-relay-secret

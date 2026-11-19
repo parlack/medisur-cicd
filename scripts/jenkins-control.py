@@ -6,7 +6,7 @@ import urllib.request
 from pathlib import Path
 
 parser = argparse.ArgumentParser()
-parser.add_argument('action', choices=['status', 'build', 'console', 'plugins', 'install-github', 'lint', 'tests'])
+parser.add_argument('action', choices=['status', 'build', 'console', 'plugins', 'install-github', 'lint', 'tests', 'delete-demo-job'])
 parser.add_argument('--job', default='medisur-main')
 parser.add_argument('--build', default='lastBuild')
 parser.add_argument('--lines', type=int, default=65)
@@ -34,6 +34,12 @@ elif args.action == 'plugins':
     print(json.dumps([p for p in data['plugins'] if p['shortName'] in ['github', 'junit', 'sonar', 'workflow-job']], indent=2))
 elif args.action == 'tests':
     print(call(f'/job/{args.job}/{args.build}/testReport/api/json?tree=failCount,skipCount,totalCount,passCount'))
+elif args.action == 'delete-demo-job':
+    # Only the isolated manual demonstration jobs may be removed and recreated.
+    if args.job not in ('medisur-rollout-demo', 'medisur-quality-demo'):
+        raise SystemExit('Refusing to delete a job that is not an isolated demonstration')
+    call(f'/job/{args.job}/doDelete', data=b'')
+    print(f'Deleted demonstration job {args.job}')
 elif args.action == 'install-github':
     call('/pluginManager/installNecessaryPlugins', data=b'<jenkins><install plugin="github@1.47.0" /></jenkins>', content_type='text/xml')
     print('GitHub plugin installation requested')

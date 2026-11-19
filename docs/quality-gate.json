@@ -1,0 +1,158 @@
+{
+  "collected_at": "2026-11-19T18:18:30.797922+00:00",
+  "scope": "Controlled uncovered-code fixture; isolated project; no production changes",
+  "build": {
+    "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+    "building": false,
+    "number": 2,
+    "result": "FAILURE"
+  },
+  "tests": {
+    "_class": "hudson.tasks.junit.TestResult",
+    "failCount": 0,
+    "passCount": 35,
+    "skipCount": 0
+  },
+  "workflow": {
+    "_links": {
+      "self": {
+        "href": "/job/medisur-quality-demo/lastBuild/wfapi/describe"
+      },
+      "artifacts": {
+        "href": "/job/medisur-quality-demo/lastBuild/wfapi/artifacts"
+      }
+    },
+    "id": "2",
+    "name": "#2",
+    "status": "FAILED",
+    "startTimeMillis": 1795112245323,
+    "endTimeMillis": 1795112280310,
+    "durationMillis": 34987,
+    "queueDurationMillis": 33,
+    "pauseDurationMillis": 0,
+    "stages": [
+      {
+        "_links": {
+          "self": {
+            "href": "/job/medisur-quality-demo/lastBuild/execution/node/12/wfapi/describe"
+          }
+        },
+        "id": "12",
+        "name": "Checkout",
+        "execNode": "",
+        "status": "SUCCESS",
+        "startTimeMillis": 1795112246911,
+        "durationMillis": 1635,
+        "pauseDurationMillis": 0
+      },
+      {
+        "_links": {
+          "self": {
+            "href": "/job/medisur-quality-demo/lastBuild/execution/node/24/wfapi/describe"
+          }
+        },
+        "id": "24",
+        "name": "Unit tests and deliberately low coverage",
+        "execNode": "",
+        "status": "SUCCESS",
+        "startTimeMillis": 1795112248618,
+        "durationMillis": 14102,
+        "pauseDurationMillis": 0
+      },
+      {
+        "_links": {
+          "self": {
+            "href": "/job/medisur-quality-demo/lastBuild/execution/node/31/wfapi/describe"
+          }
+        },
+        "id": "31",
+        "name": "SonarQube demo analysis",
+        "execNode": "",
+        "status": "SUCCESS",
+        "startTimeMillis": 1795112262803,
+        "durationMillis": 14024,
+        "pauseDurationMillis": 0
+      },
+      {
+        "_links": {
+          "self": {
+            "href": "/job/medisur-quality-demo/lastBuild/execution/node/40/wfapi/describe"
+          }
+        },
+        "id": "40",
+        "name": "Quality gate",
+        "execNode": "",
+        "status": "FAILED",
+        "error": {
+          "message": "Pipeline aborted due to quality gate failure: ERROR",
+          "type": "hudson.AbortException"
+        },
+        "startTimeMillis": 1795112276911,
+        "durationMillis": 1560,
+        "pauseDurationMillis": 815
+      },
+      {
+        "_links": {
+          "self": {
+            "href": "/job/medisur-quality-demo/lastBuild/execution/node/49/wfapi/describe"
+          }
+        },
+        "id": "49",
+        "name": "Would publish",
+        "execNode": "",
+        "status": "FAILED",
+        "error": {
+          "message": "Pipeline aborted due to quality gate failure: ERROR",
+          "type": "hudson.AbortException"
+        },
+        "startTimeMillis": 1795112278568,
+        "durationMillis": 196,
+        "pauseDurationMillis": 0
+      },
+      {
+        "_links": {
+          "self": {
+            "href": "/job/medisur-quality-demo/lastBuild/execution/node/54/wfapi/describe"
+          }
+        },
+        "id": "54",
+        "name": "Declarative: Post Actions",
+        "execNode": "",
+        "status": "SUCCESS",
+        "startTimeMillis": 1795112278849,
+        "durationMillis": 721,
+        "pauseDurationMillis": 0
+      }
+    ]
+  },
+  "sonar": {
+    "projectStatus": {
+      "status": "ERROR",
+      "conditions": [
+        {
+          "status": "ERROR",
+          "metricKey": "coverage",
+          "comparator": "LT",
+          "errorThreshold": "60",
+          "actualValue": "37.7"
+        },
+        {
+          "status": "OK",
+          "metricKey": "bugs",
+          "comparator": "GT",
+          "errorThreshold": "0",
+          "actualValue": "0"
+        },
+        {
+          "status": "OK",
+          "metricKey": "vulnerabilities",
+          "comparator": "GT",
+          "errorThreshold": "0",
+          "actualValue": "0"
+        }
+      ],
+      "ignoredConditions": false,
+      "caycStatus": "over-compliant"
+    }
+  }
+}

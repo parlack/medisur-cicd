@@ -1,0 +1,1956 @@
+{
+  "collected_utc": "2026-11-19T19:59:19.470272+00:00",
+  "build": {
+    "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+    "building": false,
+    "duration": 189997,
+    "number": 1,
+    "result": "SUCCESS",
+    "timestamp": 1795118080646,
+    "url": "http://localhost:8080/job/medisur-rollout-demo/1/"
+  },
+  "main_after": {
+    "_class": "org.jenkinsci.plugins.workflow.job.WorkflowRun",
+    "building": false,
+    "number": 3,
+    "result": "SUCCESS"
+  },
+  "main_config_sha256_after": "d620e39b55ee81e7773deace81a3d2247c16ab83fb9bf1178485851009ceed42",
+  "limitations": [
+    "HTTP and pod observations are sampled, not proof of uninterrupted availability.",
+    "No SQLite writes or database rollback; single-node pilot only.",
+    "Isolated job SUCCESS means negative test passed; deploy.sh itself must exit nonzero."
+  ],
+  "before": {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+      "annotations": {
+        "deployment.kubernetes.io/revision": "4",
+        "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"metadata\":{\"annotations\":{},\"labels\":{\"app.kubernetes.io/name\":\"medisur\"},\"name\":\"medisur\",\"namespace\":\"medisur\"},\"spec\":{\"minReadySeconds\":10,\"progressDeadlineSeconds\":180,\"replicas\":2,\"revisionHistoryLimit\":5,\"selector\":{\"matchLabels\":{\"app.kubernetes.io/name\":\"medisur\"}},\"strategy\":{\"rollingUpdate\":{\"maxSurge\":1,\"maxUnavailable\":0},\"type\":\"RollingUpdate\"},\"template\":{\"metadata\":{\"annotations\":{\"medisur.io/git-sha\":\"f04534bb54d0a16472ea97009fcebc409e43fb8c\",\"medisur.io/version\":\"0.1.0-f04534bb54d0\",\"prometheus.io/path\":\"/metrics\",\"prometheus.io/port\":\"8000\",\"prometheus.io/scrape\":\"true\"},\"labels\":{\"app.kubernetes.io/name\":\"medisur\",\"app.kubernetes.io/version\":\"0.1.0-f04534bb54d0\"}},\"spec\":{\"affinity\":{\"nodeAffinity\":{\"requiredDuringSchedulingIgnoredDuringExecution\":{\"nodeSelectorTerms\":[{\"matchExpressions\":[{\"key\":\"medisur.io/sqlite-node\",\"operator\":\"In\",\"values\":[\"true\"]}]}]}}},\"automountServiceAccountToken\":false,\"containers\":[{\"envFrom\":[{\"configMapRef\":{\"name\":\"medisur-config-v1\"}}],\"image\":\"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-f04534bb54d0\",\"imagePullPolicy\":\"Always\",\"lifecycle\":{\"preStop\":{\"exec\":{\"command\":[\"python\",\"-c\",\"import time; time.sleep(5)\"]}}},\"livenessProbe\":{\"failureThreshold\":3,\"httpGet\":{\"path\":\"/health\",\"port\":\"http\"},\"periodSeconds\":10,\"timeoutSeconds\":2},\"name\":\"app\",\"ports\":[{\"containerPort\":8000,\"name\":\"http\"}],\"readinessProbe\":{\"failureThreshold\":3,\"httpGet\":{\"path\":\"/ready\",\"port\":\"http\"},\"periodSeconds\":5,\"timeoutSeconds\":7},\"resources\":{\"limits\":{\"cpu\":\"500m\",\"memory\":\"256Mi\"},\"requests\":{\"cpu\":\"100m\",\"memory\":\"128Mi\"}},\"securityContext\":{\"allowPrivilegeEscalation\":false,\"capabilities\":{\"drop\":[\"ALL\"]},\"readOnlyRootFilesystem\":true},\"startupProbe\":{\"failureThreshold\":24,\"httpGet\":{\"path\":\"/health\",\"port\":\"http\"},\"periodSeconds\":5,\"timeoutSeconds\":2},\"volumeMounts\":[{\"mountPath\":\"/data\",\"name\":\"data\"},{\"mountPath\":\"/tmp\",\"name\":\"tmp\"}]}],\"imagePullSecrets\":[{\"name\":\"ghcr-pull\"}],\"securityContext\":{\"fsGroup\":10001,\"fsGroupChangePolicy\":\"OnRootMismatch\",\"runAsGroup\":10001,\"runAsNonRoot\":true,\"runAsUser\":10001,\"seccompProfile\":{\"type\":\"RuntimeDefault\"}},\"serviceAccountName\":\"medisur-app\",\"terminationGracePeriodSeconds\":45,\"volumes\":[{\"name\":\"data\",\"persistentVolumeClaim\":{\"claimName\":\"medisur-data\"}},{\"emptyDir\":{\"sizeLimit\":\"64Mi\"},\"name\":\"tmp\"}]}}}}\n"
+      },
+      "creationTimestamp": "2026-11-19T18:14:36Z",
+      "generation": 4,
+      "labels": {
+        "app.kubernetes.io/name": "medisur"
+      },
+      "name": "medisur",
+      "namespace": "medisur",
+      "resourceVersion": "87675",
+      "uid": "1900e289-4c7f-4753-9be0-f3129997ca52"
+    },
+    "spec": {
+      "minReadySeconds": 10,
+      "progressDeadlineSeconds": 180,
+      "replicas": 2,
+      "revisionHistoryLimit": 5,
+      "selector": {
+        "matchLabels": {
+          "app.kubernetes.io/name": "medisur"
+        }
+      },
+      "strategy": {
+        "rollingUpdate": {
+          "maxSurge": 1,
+          "maxUnavailable": 0
+        },
+        "type": "RollingUpdate"
+      },
+      "template": {
+        "metadata": {
+          "annotations": {
+            "medisur.io/git-sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+            "medisur.io/version": "0.1.0-f04534bb54d0",
+            "prometheus.io/path": "/metrics",
+            "prometheus.io/port": "8000",
+            "prometheus.io/scrape": "true"
+          },
+          "labels": {
+            "app.kubernetes.io/name": "medisur",
+            "app.kubernetes.io/version": "0.1.0-f04534bb54d0"
+          }
+        },
+        "spec": {
+          "affinity": {
+            "nodeAffinity": {
+              "requiredDuringSchedulingIgnoredDuringExecution": {
+                "nodeSelectorTerms": [
+                  {
+                    "matchExpressions": [
+                      {
+                        "key": "medisur.io/sqlite-node",
+                        "operator": "In",
+                        "values": [
+                          "true"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "automountServiceAccountToken": false,
+          "containers": [
+            {
+              "envFrom": [
+                {
+                  "configMapRef": {
+                    "name": "medisur-config-v1"
+                  }
+                }
+              ],
+              "image": "ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-f04534bb54d0",
+              "imagePullPolicy": "Always",
+              "lifecycle": {
+                "preStop": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-c",
+                      "import time; time.sleep(5)"
+                    ]
+                  }
+                }
+              },
+              "livenessProbe": {
+                "failureThreshold": 3,
+                "httpGet": {
+                  "path": "/health",
+                  "port": "http",
+                  "scheme": "HTTP"
+                },
+                "periodSeconds": 10,
+                "successThreshold": 1,
+                "timeoutSeconds": 2
+              },
+              "name": "app",
+              "ports": [
+                {
+                  "containerPort": 8000,
+                  "name": "http",
+                  "protocol": "TCP"
+                }
+              ],
+              "readinessProbe": {
+                "failureThreshold": 3,
+                "httpGet": {
+                  "path": "/ready",
+                  "port": "http",
+                  "scheme": "HTTP"
+                },
+                "periodSeconds": 5,
+                "successThreshold": 1,
+                "timeoutSeconds": 7
+              },
+              "resources": {
+                "limits": {
+                  "cpu": "500m",
+                  "memory": "256Mi"
+                },
+                "requests": {
+                  "cpu": "100m",
+                  "memory": "128Mi"
+                }
+              },
+              "securityContext": {
+                "allowPrivilegeEscalation": false,
+                "capabilities": {
+                  "drop": [
+                    "ALL"
+                  ]
+                },
+                "readOnlyRootFilesystem": true
+              },
+              "startupProbe": {
+                "failureThreshold": 24,
+                "httpGet": {
+                  "path": "/health",
+                  "port": "http",
+                  "scheme": "HTTP"
+                },
+                "periodSeconds": 5,
+                "successThreshold": 1,
+                "timeoutSeconds": 2
+              },
+              "terminationMessagePath": "/dev/termination-log",
+              "terminationMessagePolicy": "File",
+              "volumeMounts": [
+                {
+                  "mountPath": "/data",
+                  "name": "data"
+                },
+                {
+                  "mountPath": "/tmp",
+                  "name": "tmp"
+                }
+              ]
+            }
+          ],
+          "dnsPolicy": "ClusterFirst",
+          "imagePullSecrets": [
+            {
+              "name": "ghcr-pull"
+            }
+          ],
+          "restartPolicy": "Always",
+          "schedulerName": "default-scheduler",
+          "securityContext": {
+            "fsGroup": 10001,
+            "fsGroupChangePolicy": "OnRootMismatch",
+            "runAsGroup": 10001,
+            "runAsNonRoot": true,
+            "runAsUser": 10001,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          },
+          "serviceAccount": "medisur-app",
+          "serviceAccountName": "medisur-app",
+          "terminationGracePeriodSeconds": 45,
+          "volumes": [
+            {
+              "name": "data",
+              "persistentVolumeClaim": {
+                "claimName": "medisur-data"
+              }
+            },
+            {
+              "emptyDir": {
+                "sizeLimit": "64Mi"
+              },
+              "name": "tmp"
+            }
+          ]
+        }
+      }
+    },
+    "status": {
+      "availableReplicas": 2,
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-19T18:23:41Z",
+          "lastUpdateTime": "2026-11-19T18:23:41Z",
+          "message": "Deployment has minimum availability.",
+          "reason": "MinimumReplicasAvailable",
+          "status": "True",
+          "type": "Available"
+        },
+        {
+          "lastTransitionTime": "2026-11-19T18:14:36Z",
+          "lastUpdateTime": "2026-11-19T18:26:51Z",
+          "message": "ReplicaSet \"medisur-7c56fdf88b\" has successfully progressed.",
+          "reason": "NewReplicaSetAvailable",
+          "status": "True",
+          "type": "Progressing"
+        }
+      ],
+      "observedGeneration": 4,
+      "readyReplicas": 2,
+      "replicas": 2,
+      "terminatingReplicas": 0,
+      "updatedReplicas": 2
+    }
+  },
+  "after": {
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+      "annotations": {
+        "deployment.kubernetes.io/revision": "6",
+        "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"metadata\":{\"annotations\":{},\"labels\":{\"app.kubernetes.io/name\":\"medisur\"},\"name\":\"medisur\",\"namespace\":\"medisur\"},\"spec\":{\"minReadySeconds\":10,\"progressDeadlineSeconds\":180,\"replicas\":2,\"revisionHistoryLimit\":5,\"selector\":{\"matchLabels\":{\"app.kubernetes.io/name\":\"medisur\"}},\"strategy\":{\"rollingUpdate\":{\"maxSurge\":1,\"maxUnavailable\":0},\"type\":\"RollingUpdate\"},\"template\":{\"metadata\":{\"annotations\":{\"medisur.io/git-sha\":\"deadbeefdeadbeefdeadbeefdeadbeefdeadbeef\",\"medisur.io/version\":\"0.1.0-deadbeefdead\",\"prometheus.io/path\":\"/metrics\",\"prometheus.io/port\":\"8000\",\"prometheus.io/scrape\":\"true\"},\"labels\":{\"app.kubernetes.io/name\":\"medisur\",\"app.kubernetes.io/version\":\"0.1.0-deadbeefdead\"}},\"spec\":{\"affinity\":{\"nodeAffinity\":{\"requiredDuringSchedulingIgnoredDuringExecution\":{\"nodeSelectorTerms\":[{\"matchExpressions\":[{\"key\":\"medisur.io/sqlite-node\",\"operator\":\"In\",\"values\":[\"true\"]}]}]}}},\"automountServiceAccountToken\":false,\"containers\":[{\"envFrom\":[{\"configMapRef\":{\"name\":\"medisur-config-v1\"}}],\"image\":\"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\",\"imagePullPolicy\":\"Always\",\"lifecycle\":{\"preStop\":{\"exec\":{\"command\":[\"python\",\"-c\",\"import time; time.sleep(5)\"]}}},\"livenessProbe\":{\"failureThreshold\":3,\"httpGet\":{\"path\":\"/health\",\"port\":\"http\"},\"periodSeconds\":10,\"timeoutSeconds\":2},\"name\":\"app\",\"ports\":[{\"containerPort\":8000,\"name\":\"http\"}],\"readinessProbe\":{\"failureThreshold\":3,\"httpGet\":{\"path\":\"/ready\",\"port\":\"http\"},\"periodSeconds\":5,\"timeoutSeconds\":7},\"resources\":{\"limits\":{\"cpu\":\"500m\",\"memory\":\"256Mi\"},\"requests\":{\"cpu\":\"100m\",\"memory\":\"128Mi\"}},\"securityContext\":{\"allowPrivilegeEscalation\":false,\"capabilities\":{\"drop\":[\"ALL\"]},\"readOnlyRootFilesystem\":true},\"startupProbe\":{\"failureThreshold\":24,\"httpGet\":{\"path\":\"/health\",\"port\":\"http\"},\"periodSeconds\":5,\"timeoutSeconds\":2},\"volumeMounts\":[{\"mountPath\":\"/data\",\"name\":\"data\"},{\"mountPath\":\"/tmp\",\"name\":\"tmp\"}]}],\"imagePullSecrets\":[{\"name\":\"ghcr-pull\"}],\"securityContext\":{\"fsGroup\":10001,\"fsGroupChangePolicy\":\"OnRootMismatch\",\"runAsGroup\":10001,\"runAsNonRoot\":true,\"runAsUser\":10001,\"seccompProfile\":{\"type\":\"RuntimeDefault\"}},\"serviceAccountName\":\"medisur-app\",\"terminationGracePeriodSeconds\":45,\"volumes\":[{\"name\":\"data\",\"persistentVolumeClaim\":{\"claimName\":\"medisur-data\"}},{\"emptyDir\":{\"sizeLimit\":\"64Mi\"},\"name\":\"tmp\"}]}}}}\n"
+      },
+      "creationTimestamp": "2026-11-19T18:14:36Z",
+      "generation": 6,
+      "labels": {
+        "app.kubernetes.io/name": "medisur"
+      },
+      "name": "medisur",
+      "namespace": "medisur",
+      "resourceVersion": "97559",
+      "uid": "1900e289-4c7f-4753-9be0-f3129997ca52"
+    },
+    "spec": {
+      "minReadySeconds": 10,
+      "progressDeadlineSeconds": 180,
+      "replicas": 2,
+      "revisionHistoryLimit": 5,
+      "selector": {
+        "matchLabels": {
+          "app.kubernetes.io/name": "medisur"
+        }
+      },
+      "strategy": {
+        "rollingUpdate": {
+          "maxSurge": 1,
+          "maxUnavailable": 0
+        },
+        "type": "RollingUpdate"
+      },
+      "template": {
+        "metadata": {
+          "annotations": {
+            "medisur.io/git-sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+            "medisur.io/version": "0.1.0-f04534bb54d0",
+            "prometheus.io/path": "/metrics",
+            "prometheus.io/port": "8000",
+            "prometheus.io/scrape": "true"
+          },
+          "labels": {
+            "app.kubernetes.io/name": "medisur",
+            "app.kubernetes.io/version": "0.1.0-f04534bb54d0"
+          }
+        },
+        "spec": {
+          "affinity": {
+            "nodeAffinity": {
+              "requiredDuringSchedulingIgnoredDuringExecution": {
+                "nodeSelectorTerms": [
+                  {
+                    "matchExpressions": [
+                      {
+                        "key": "medisur.io/sqlite-node",
+                        "operator": "In",
+                        "values": [
+                          "true"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "automountServiceAccountToken": false,
+          "containers": [
+            {
+              "envFrom": [
+                {
+                  "configMapRef": {
+                    "name": "medisur-config-v1"
+                  }
+                }
+              ],
+              "image": "ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-f04534bb54d0",
+              "imagePullPolicy": "Always",
+              "lifecycle": {
+                "preStop": {
+                  "exec": {
+                    "command": [
+                      "python",
+                      "-c",
+                      "import time; time.sleep(5)"
+                    ]
+                  }
+                }
+              },
+              "livenessProbe": {
+                "failureThreshold": 3,
+                "httpGet": {
+                  "path": "/health",
+                  "port": "http",
+                  "scheme": "HTTP"
+                },
+                "periodSeconds": 10,
+                "successThreshold": 1,
+                "timeoutSeconds": 2
+              },
+              "name": "app",
+              "ports": [
+                {
+                  "containerPort": 8000,
+                  "name": "http",
+                  "protocol": "TCP"
+                }
+              ],
+              "readinessProbe": {
+                "failureThreshold": 3,
+                "httpGet": {
+                  "path": "/ready",
+                  "port": "http",
+                  "scheme": "HTTP"
+                },
+                "periodSeconds": 5,
+                "successThreshold": 1,
+                "timeoutSeconds": 7
+              },
+              "resources": {
+                "limits": {
+                  "cpu": "500m",
+                  "memory": "256Mi"
+                },
+                "requests": {
+                  "cpu": "100m",
+                  "memory": "128Mi"
+                }
+              },
+              "securityContext": {
+                "allowPrivilegeEscalation": false,
+                "capabilities": {
+                  "drop": [
+                    "ALL"
+                  ]
+                },
+                "readOnlyRootFilesystem": true
+              },
+              "startupProbe": {
+                "failureThreshold": 24,
+                "httpGet": {
+                  "path": "/health",
+                  "port": "http",
+                  "scheme": "HTTP"
+                },
+                "periodSeconds": 5,
+                "successThreshold": 1,
+                "timeoutSeconds": 2
+              },
+              "terminationMessagePath": "/dev/termination-log",
+              "terminationMessagePolicy": "File",
+              "volumeMounts": [
+                {
+                  "mountPath": "/data",
+                  "name": "data"
+                },
+                {
+                  "mountPath": "/tmp",
+                  "name": "tmp"
+                }
+              ]
+            }
+          ],
+          "dnsPolicy": "ClusterFirst",
+          "imagePullSecrets": [
+            {
+              "name": "ghcr-pull"
+            }
+          ],
+          "restartPolicy": "Always",
+          "schedulerName": "default-scheduler",
+          "securityContext": {
+            "fsGroup": 10001,
+            "fsGroupChangePolicy": "OnRootMismatch",
+            "runAsGroup": 10001,
+            "runAsNonRoot": true,
+            "runAsUser": 10001,
+            "seccompProfile": {
+              "type": "RuntimeDefault"
+            }
+          },
+          "serviceAccount": "medisur-app",
+          "serviceAccountName": "medisur-app",
+          "terminationGracePeriodSeconds": 45,
+          "volumes": [
+            {
+              "name": "data",
+              "persistentVolumeClaim": {
+                "claimName": "medisur-data"
+              }
+            },
+            {
+              "emptyDir": {
+                "sizeLimit": "64Mi"
+              },
+              "name": "tmp"
+            }
+          ]
+        }
+      }
+    },
+    "status": {
+      "availableReplicas": 2,
+      "conditions": [
+        {
+          "lastTransitionTime": "2026-11-19T18:23:41Z",
+          "lastUpdateTime": "2026-11-19T18:23:41Z",
+          "message": "Deployment has minimum availability.",
+          "reason": "MinimumReplicasAvailable",
+          "status": "True",
+          "type": "Available"
+        },
+        {
+          "lastTransitionTime": "2026-11-19T19:57:45Z",
+          "lastUpdateTime": "2026-11-19T19:57:45Z",
+          "message": "ReplicaSet \"medisur-7c56fdf88b\" has successfully progressed.",
+          "reason": "NewReplicaSetAvailable",
+          "status": "True",
+          "type": "Progressing"
+        }
+      ],
+      "observedGeneration": 6,
+      "readyReplicas": 2,
+      "replicas": 2,
+      "terminatingReplicas": 1,
+      "updatedReplicas": 2
+    }
+  },
+  "before-pods": [
+    {
+      "name": "medisur-7c56fdf88b-ndjjl",
+      "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+      "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+      "terminating": false,
+      "ready": true,
+      "waiting": []
+    },
+    {
+      "name": "medisur-7c56fdf88b-zvn6h",
+      "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+      "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+      "terminating": false,
+      "ready": true,
+      "waiting": []
+    }
+  ],
+  "after-pods": [
+    {
+      "name": "medisur-6d697d5d55-bfskn",
+      "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+      "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+      "terminating": true,
+      "ready": false,
+      "waiting": [
+        {
+          "reason": "ContainerCreating"
+        }
+      ]
+    },
+    {
+      "name": "medisur-7c56fdf88b-ndjjl",
+      "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+      "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+      "terminating": false,
+      "ready": true,
+      "waiting": []
+    },
+    {
+      "name": "medisur-7c56fdf88b-zvn6h",
+      "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+      "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+      "terminating": false,
+      "ready": true,
+      "waiting": []
+    }
+  ],
+  "result": {
+    "started_utc": "2026-11-19T19:54:43Z",
+    "finished_utc": "2026-11-19T19:57:46Z",
+    "deploy_exit_code": 1,
+    "deploy_seconds": 182,
+    "verify_exit_code": 0,
+    "rescue_attempted": false,
+    "candidate_sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+    "start_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+    "end_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+    "start_revision": "4",
+    "end_revision": "6",
+    "final_http_version": {
+      "build_date": "2026-11-19T18:18:01Z",
+      "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+      "version": "0.1.0-f04534bb54d0"
+    },
+    "original_pods_preserved": false,
+    "samples": 36,
+    "http_samples_failed": 0,
+    "samples_below_two_old_ready": 0,
+    "candidate_pull_failure_observed": true,
+    "automatic_rollback_verified": true
+  },
+  "samples": [
+    {
+      "at": "2026-11-19T19:54:43Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:54:48Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:54:53Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:54:58Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:55:03Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:55:08Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:55:14Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ErrImagePull"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:55:19Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ErrImagePull"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:55:24Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ErrImagePull"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:55:29Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:55:34Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:55:39Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ErrImagePull"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:55:44Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ErrImagePull"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:55:49Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ErrImagePull"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:55:54Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:55:59Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:56:04Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:56:09Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:56:15Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:56:20Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ErrImagePull"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:56:25Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ErrImagePull"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:56:30Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ErrImagePull"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:56:35Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:56:40Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:56:45Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:56:50Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:56:55Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:57:00Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:57:05Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:57:11Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:57:16Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:57:21Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:57:26Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:57:31Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:57:36Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T19:57:41Z",
+      "version": {
+        "build_date": "2026-11-19T18:18:01Z",
+        "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "version": "0.1.0-f04534bb54d0"
+      },
+      "pods": [
+        {
+          "name": "medisur-6d697d5d55-bfskn",
+          "uid": "14701685-b44c-4309-a457-c50fea54fb09",
+          "sha": "deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          "terminating": false,
+          "ready": false,
+          "waiting": [
+            {
+              "message": "Back-off pulling image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": ErrImagePull: rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found",
+              "reason": "ImagePullBackOff"
+            }
+          ]
+        },
+        {
+          "name": "medisur-7c56fdf88b-ndjjl",
+          "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        },
+        {
+          "name": "medisur-7c56fdf88b-zvn6h",
+          "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+          "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+          "terminating": false,
+          "ready": true,
+          "waiting": []
+        }
+      ]
+    }
+  ],
+  "deploy_log": "deployment \"medisur\" successfully rolled out\nVerified two ready replicas and HTTP SHA f04534bb54d0a16472ea97009fcebc409e43fb8c (0.1.0-f04534bb54d0)\nconfigmap/medisur-config-v1 unchanged\nservice/medisur unchanged\nservice/medisur-nodeport unchanged\ndeployment.apps/medisur configured\nWaiting for deployment spec update to be observed...\nWaiting for deployment \"medisur\" rollout to finish: 0 out of 2 new replicas have been updated...\nWaiting for deployment \"medisur\" rollout to finish: 1 out of 2 new replicas have been updated...\nerror: deployment \"medisur\" exceeded its progress deadline\nWarning: v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice\nNAME                      READY   UP-TO-DATE   AVAILABLE   AGE    CONTAINERS   IMAGES                                                      SELECTOR\ndeployment.apps/medisur   2/2     1            2           103m   app          ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead   app.kubernetes.io/name=medisur\n\nNAME                           READY   STATUS             RESTARTS   AGE    IP             NODE     NOMINATED NODE   READINESS GATES\npod/medisur-6d697d5d55-bfskn   0/1     ImagePullBackOff   0          3m1s   10.1.181.110   lab-03   <none>           <none>\npod/medisur-7c56fdf88b-ndjjl   1/1     Running            0          91m    10.1.181.108   lab-03   <none>           <none>\npod/medisur-7c56fdf88b-zvn6h   1/1     Running            0          91m    10.1.181.109   lab-03   <none>           <none>\n\nNAME                                 DESIRED   CURRENT   READY   AGE    CONTAINERS   IMAGES                                                      SELECTOR\nreplicaset.apps/medisur-6d697d5d55   1         1         0       3m1s   app          ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead   app.kubernetes.io/name=medisur,pod-template-hash=6d697d5d55\nreplicaset.apps/medisur-7966f44689   0         0         0       103m   app          ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-6fc0a30fbeba   app.kubernetes.io/name=medisur,pod-template-hash=7966f44689\nreplicaset.apps/medisur-7c56fdf88b   2         2         2       99m    app          ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-f04534bb54d0   app.kubernetes.io/name=medisur,pod-template-hash=7c56fdf88b\nLAST SEEN   TYPE      REASON   OBJECT                         MESSAGE\n20s         Warning   Failed   pod/medisur-6d697d5d55-bfskn   Error: ImagePullBackOff\n5s          Warning   Failed   pod/medisur-6d697d5d55-bfskn   Failed to pull image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": rpc error: code = NotFound desc = failed to pull and unpack image \"ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead\": failed to resolve image: ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-deadbeefdead: not found\n5s          Warning   Failed   pod/medisur-6d697d5d55-bfskn   Error: ErrImagePull\nDeployment failed; restoring revision 4\ndeployment.apps/medisur rolled back\nWaiting for deployment spec update to be observed...\nWaiting for deployment \"medisur\" rollout to finish: 1 old replicas are pending termination...\ndeployment \"medisur\" successfully rolled out\nVerified two ready replicas and HTTP SHA f04534bb54d0a16472ea97009fcebc409e43fb8c (0.1.0-f04534bb54d0)\nPrevious release restored; this build still fails. SQLite data was not reverted.\n",
+  "source_checksums": "a6b6b4d69b46e02aba6863c73773fae24da11b272f212abcbfae5d35afac1c19  scripts/deploy.sh\n3f59852596d1eb5bbd17fd411eaa61526b9aceba0e58d97a0d25ddc227d9ac9f  scripts/verify.sh\nbd38bf24e3eb1626e0309362301fe0b0f9f2dc2a83d46e773a934932e80c1a1b  k8s/app/deployment.yaml\nf28c77b263fb822cfca01ecc5a45ceb23c8c12525cddbc84329aa0547f225d16  k8s/app/services.yaml\n06aeb67e94e18e4bb0d6884559bcc2f2822bf2db5f055695c4b7880664a5f925  k8s/app/configmap.yaml\nf4186d03bc54fd4092c17b686dbddd3a908e4f802864cac8d1ceb8ee18d66117  k8s/app/kustomization.yaml\n",
+  "main_config_sha256_before": "d620e39b55ee81e7773deace81a3d2247c16ab83fb9bf1178485851009ceed42",
+  "main_config_unchanged": true,
+  "passed": true
+}

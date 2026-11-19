@@ -1,0 +1,20 @@
+[Unit]
+Description=Authenticated GitHub webhook relay
+After=network.target
+
+[Service]
+User=medisur-webhook
+ExecStart=/usr/bin/python3 /opt/medisur-webhook/server.py
+Restart=on-failure
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+RestrictAddressFamilies=AF_INET AF_INET6
+CapabilityBoundingSet=
+MemoryMax=128M
+TasksMax=32
+
+[Install]
+WantedBy=multi-user.target

@@ -21,10 +21,12 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: medisur
-        app.kubernetes.io/version: VERSION_PLACEHOLDER
+        app.kubernetes.io/version: 'VERSION_PLACEHOLDER'
       annotations:
-        medisur.io/git-sha: GIT_SHA_PLACEHOLDER
-        medisur.io/version: VERSION_PLACEHOLDER
+        # Quoted: an all-digit SHA would otherwise be parsed as a YAML number
+        # and the API server rejects the patch with "unrecognized type: string".
+        medisur.io/git-sha: 'GIT_SHA_PLACEHOLDER'
+        medisur.io/version: 'VERSION_PLACEHOLDER'
         prometheus.io/scrape: 'true'
         prometheus.io/port: '8000'
         prometheus.io/path: /metrics

@@ -1,0 +1,102 @@
+name: medisur-alerting
+
+services:
+  alert-relay:
+    image: medisur/alert-relay:0.1.0
+    build:
+      context: ../alert-relay
+    platform: linux/amd64
+    restart: unless-stopped
+    init: true
+    user: "10001:10001"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      GITHUB_REPOSITORY: SergioMultimedios/medisur-cicd
+      ALERT_RELAY_SECRET_FILE: /run/secrets/alert-relay-secret
+    secrets:
+      - source: github_token
+        target: github-token
+      - source: relay_auth
+        target: alert-relay-secret
+    volumes:
+      - type: bind
+        source: /var/lib/medisur-alerting/state/relay
+        target: /data
+        bind:
+          create_host_path: false
+    networks: [delivery, egress]
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+    logging: &bounded_logs
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: "2"
+
+  alertmanager:
+    # Official Prometheus image; linux/amd64 manifest verified with docker manifest.
+    image: prom/alertmanager:v0.28.1@sha256:220da6995a919b9ee6e0d3da7ca5f09802f3088007af56be22160314d2485b54
+    platform: linux/amd64
+    restart: unless-stopped
+    user: "65534:65534"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yaml
+      - --storage.path=/alertmanager
+      - --data.retention=120h
+      - --cluster.listen-address=
+      - --web.listen-address=0.0.0.0:9093
+      - --log.level=warn
+    volumes:
+      - type: bind
+        source: ./alertmanager.yaml
+        target: /etc/alertmanager/alertmanager.yaml
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: /var/lib/medisur-alerting/state/alertmanager
+        target: /alertmanager
+        bind:
+          create_host_path: false
+    secrets:
+      - source: alertmanager_auth
+        target: alert-relay-secret
+    networks:
+      delivery:
+      tools:
+        aliases: [alertmanager]
+    depends_on:
+      alert-relay:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:9093/-/ready]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+    mem_limit: 128m
+    cpus: 0.5
+    pids_limit: 64
+    logging: *bounded_logs
+
+# No published ports. Only Alertmanager joins the existing trusted tools network.
+networks:
+  delivery:
+    internal: true
+  egress:
+  tools:
+    external: true
+    name: medisur-tools_default
+
+secrets:
+  github_token:
+    file: /etc/medisur/secrets/alert-github-token
+  relay_auth:
+    file: /etc/medisur/secrets/alert-relay-auth
+  alertmanager_auth:
+    file: /etc/medisur/secrets/alertmanager-relay-auth

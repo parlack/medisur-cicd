@@ -1,0 +1,12 @@
+[Unit]
+Description=Bounded persistent storage for Medisur alert delivery
+Before=docker.service
+
+[Mount]
+What=/var/lib/medisur-alerting/state.ext4
+Where=/var/lib/medisur-alerting/state
+Type=ext4
+Options=loop,nodev,nosuid,noexec
+
+[Install]
+WantedBy=multi-user.target

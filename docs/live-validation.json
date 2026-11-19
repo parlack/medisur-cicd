@@ -1,0 +1,406 @@
+{
+  "schema_version": 1,
+  "started_at": "2026-11-19T18:20:10.624927+00:00",
+  "scope": "Loopback APIs; current Sonar project and Prometheus snapshot, not proven build-correlated.",
+  "jenkins": {
+    "job": "medisur-main",
+    "build": {
+      "number": 3,
+      "result": "SUCCESS",
+      "building": false,
+      "timestamp": 1795112245309,
+      "duration": 111737
+    },
+    "workflow": {
+      "status": "SUCCESS",
+      "stages": [
+        {
+          "id": "12",
+          "name": "Checkout",
+          "status": "SUCCESS",
+          "startTimeMillis": 1795112280597,
+          "durationMillis": 2283
+        },
+        {
+          "id": "26",
+          "name": "Unit tests and coverage",
+          "status": "SUCCESS",
+          "startTimeMillis": 1795112282959,
+          "durationMillis": 12579
+        },
+        {
+          "id": "33",
+          "name": "SonarQube analysis",
+          "status": "SUCCESS",
+          "startTimeMillis": 1795112295621,
+          "durationMillis": 15191
+        },
+        {
+          "id": "42",
+          "name": "Quality gate",
+          "status": "SUCCESS",
+          "startTimeMillis": 1795112310930,
+          "durationMillis": 670
+        },
+        {
+          "id": "51",
+          "name": "Build runtime image",
+          "status": "SUCCESS",
+          "startTimeMillis": 1795112311684,
+          "durationMillis": 5875
+        },
+        {
+          "id": "56",
+          "name": "Publish main image",
+          "status": "SUCCESS",
+          "startTimeMillis": 1795112317629,
+          "durationMillis": 4590
+        },
+        {
+          "id": "65",
+          "name": "Deploy main and smoke test",
+          "status": "SUCCESS",
+          "startTimeMillis": 1795112322289,
+          "durationMillis": 33486
+        },
+        {
+          "id": "74",
+          "name": "Declarative: Post Actions",
+          "status": "SUCCESS",
+          "startTimeMillis": 1795112355846,
+          "durationMillis": 732
+        }
+      ],
+      "stage_count": 8
+    },
+    "tests": {
+      "failCount": 0,
+      "skipCount": 0,
+      "totalCount": 35
+    }
+  },
+  "sonar": {
+    "project": "medisur-cicd",
+    "quality_gate": {
+      "status": "OK",
+      "conditions": [
+        {
+          "status": "OK",
+          "metricKey": "coverage",
+          "comparator": "LT",
+          "errorThreshold": "60",
+          "actualValue": "93.9"
+        },
+        {
+          "status": "OK",
+          "metricKey": "bugs",
+          "comparator": "GT",
+          "errorThreshold": "0",
+          "actualValue": "0"
+        },
+        {
+          "status": "OK",
+          "metricKey": "new_violations",
+          "comparator": "GT",
+          "errorThreshold": "0",
+          "actualValue": "0"
+        },
+        {
+          "status": "OK",
+          "metricKey": "vulnerabilities",
+          "comparator": "GT",
+          "errorThreshold": "0",
+          "actualValue": "0"
+        }
+      ]
+    },
+    "metrics": {
+      "coverage": "93.9",
+      "bugs": "0",
+      "code_smells": "1",
+      "vulnerabilities": "0"
+    },
+    "issues": {
+      "unresolved_total": 1
+    }
+  },
+  "prometheus": {
+    "targets": {
+      "active_count": 7,
+      "healthy_count": 7,
+      "targets": [
+        {
+          "job": "kube-state-metrics",
+          "instance": "172.16.0.4:30080",
+          "health": "up",
+          "lastScrape": "2026-11-19T18:20:06.074263988Z"
+        },
+        {
+          "job": "kubernetes-cadvisor",
+          "instance": "lab-03",
+          "health": "up",
+          "lastScrape": "2026-11-19T18:19:42.837640498Z"
+        },
+        {
+          "job": "medisur",
+          "instance": "medisur/medisur-7c56fdf88b-sfsh4/8000",
+          "health": "up",
+          "lastScrape": "2026-11-19T18:19:45.863515831Z"
+        },
+        {
+          "job": "medisur",
+          "instance": "medisur/medisur-7c56fdf88b-c55xg/8000",
+          "health": "up",
+          "lastScrape": "2026-11-19T18:20:03.836107071Z"
+        },
+        {
+          "job": "node",
+          "instance": "host.docker.internal:9100",
+          "health": "up",
+          "lastScrape": "2026-11-19T18:19:45.004228943Z"
+        },
+        {
+          "job": "node",
+          "instance": "172.16.0.4:9100",
+          "health": "up",
+          "lastScrape": "2026-11-19T18:19:42.09157826Z"
+        },
+        {
+          "job": "prometheus",
+          "instance": "localhost:9090",
+          "health": "up",
+          "lastScrape": "2026-11-19T18:19:56.126390176Z"
+        }
+      ]
+    },
+    "queries": {
+      "up": {
+        "expression": "up",
+        "series": [
+          {
+            "labels": {
+              "instance": "localhost:9090",
+              "job": "prometheus"
+            },
+            "timestamp": 1795112411.102,
+            "value": "1"
+          },
+          {
+            "labels": {
+              "instance": "172.16.0.4:30080",
+              "job": "kube-state-metrics"
+            },
+            "timestamp": 1795112411.102,
+            "value": "1"
+          },
+          {
+            "labels": {
+              "instance": "172.16.0.4:9100",
+              "job": "node"
+            },
+            "timestamp": 1795112411.102,
+            "value": "1"
+          },
+          {
+            "labels": {
+              "instance": "lab-03",
+              "job": "kubernetes-cadvisor"
+            },
+            "timestamp": 1795112411.102,
+            "value": "1"
+          },
+          {
+            "labels": {
+              "instance": "host.docker.internal:9100",
+              "job": "node"
+            },
+            "timestamp": 1795112411.102,
+            "value": "1"
+          },
+          {
+            "labels": {
+              "instance": "medisur/medisur-7c56fdf88b-c55xg/8000",
+              "job": "medisur",
+              "namespace": "medisur",
+              "pod": "medisur-7c56fdf88b-c55xg",
+              "version": "0.1.0-f04534bb54d0"
+            },
+            "timestamp": 1795112411.102,
+            "value": "1"
+          },
+          {
+            "labels": {
+              "instance": "medisur/medisur-7c56fdf88b-sfsh4/8000",
+              "job": "medisur",
+              "namespace": "medisur",
+              "pod": "medisur-7c56fdf88b-sfsh4",
+              "version": "0.1.0-f04534bb54d0"
+            },
+            "timestamp": 1795112411.102,
+            "value": "1"
+          }
+        ]
+      },
+      "app_rps": {
+        "expression": "sum by (pod, version) (rate(http_requests_total{job=\"medisur\",route!~\"/metrics|/health|/ready\"}[5m]))",
+        "series": [
+          {
+            "labels": {
+              "pod": "medisur-7966f44689-r6thm",
+              "version": "0.1.0-6fc0a30fbeba"
+            },
+            "timestamp": 1795112411.102,
+            "value": "0"
+          },
+          {
+            "labels": {
+              "pod": "medisur-7966f44689-p5mvq",
+              "version": "0.1.0-6fc0a30fbeba"
+            },
+            "timestamp": 1795112411.102,
+            "value": "0.003812777777777778"
+          },
+          {
+            "labels": {
+              "pod": "medisur-7c56fdf88b-sfsh4",
+              "version": "0.1.0-f04534bb54d0"
+            },
+            "timestamp": 1795112411.102,
+            "value": "0"
+          },
+          {
+            "labels": {
+              "pod": "medisur-7c56fdf88b-c55xg",
+              "version": "0.1.0-f04534bb54d0"
+            },
+            "timestamp": 1795112411.102,
+            "value": "0.005807333333333334"
+          }
+        ]
+      },
+      "cadvisor_cpu_cores": {
+        "expression": "sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{job=\"kubernetes-cadvisor\",namespace=\"medisur\",container!=\"\",container!=\"POD\",pod!=\"\"}[5m]))",
+        "series": [
+          {
+            "labels": {
+              "namespace": "medisur",
+              "pod": "medisur-7966f44689-r6thm"
+            },
+            "timestamp": 1795112411.102,
+            "value": "0.0006539122205079985"
+          },
+          {
+            "labels": {
+              "namespace": "medisur",
+              "pod": "medisur-7966f44689-p5mvq"
+            },
+            "timestamp": 1795112411.102,
+            "value": "0.0007238095238095245"
+          },
+          {
+            "labels": {
+              "namespace": "medisur",
+              "pod": "medisur-7c56fdf88b-sfsh4"
+            },
+            "timestamp": 1795112411.102,
+            "value": "0.00021610666666666668"
+          },
+          {
+            "labels": {
+              "namespace": "medisur",
+              "pod": "medisur-7c56fdf88b-c55xg"
+            },
+            "timestamp": 1795112411.102,
+            "value": "0.00021894000000000083"
+          }
+        ]
+      },
+      "cadvisor_memory_bytes": {
+        "expression": "sum by (namespace, pod) (container_memory_working_set_bytes{job=\"kubernetes-cadvisor\",namespace=\"medisur\",container!=\"\",container!=\"POD\",pod!=\"\"})",
+        "series": [
+          {
+            "labels": {
+              "namespace": "medisur",
+              "pod": "medisur-7966f44689-r6thm"
+            },
+            "timestamp": 1795112411.102,
+            "value": "51855360"
+          },
+          {
+            "labels": {
+              "namespace": "medisur",
+              "pod": "medisur-7966f44689-p5mvq"
+            },
+            "timestamp": 1795112411.102,
+            "value": "51941376"
+          },
+          {
+            "labels": {
+              "namespace": "medisur",
+              "pod": "medisur-7c56fdf88b-sfsh4"
+            },
+            "timestamp": 1795112411.102,
+            "value": "51859456"
+          },
+          {
+            "labels": {
+              "namespace": "medisur",
+              "pod": "medisur-7c56fdf88b-c55xg"
+            },
+            "timestamp": 1795112411.102,
+            "value": "51834880"
+          }
+        ]
+      },
+      "ksm_ready_replicas": {
+        "expression": "kube_deployment_status_replicas_ready{namespace=\"medisur\",job=\"kube-state-metrics\"}",
+        "series": [
+          {
+            "labels": {
+              "deployment": "medisur",
+              "instance": "172.16.0.4:30080",
+              "job": "kube-state-metrics",
+              "namespace": "medisur"
+            },
+            "timestamp": 1795112411.102,
+            "value": "2"
+          }
+        ]
+      },
+      "ksm_desired_replicas": {
+        "expression": "kube_deployment_spec_replicas{namespace=\"medisur\",job=\"kube-state-metrics\"}",
+        "series": [
+          {
+            "labels": {
+              "deployment": "medisur",
+              "instance": "172.16.0.4:30080",
+              "job": "kube-state-metrics",
+              "namespace": "medisur"
+            },
+            "timestamp": 1795112411.102,
+            "value": "2"
+          }
+        ]
+      }
+    }
+  },
+  "grafana": {
+    "count": 2,
+    "dashboards": [
+      {
+        "uid": "medisur-application",
+        "title": "Medisur - Application",
+        "type": "dash-db"
+      },
+      {
+        "uid": "medisur-infrastructure",
+        "title": "Medisur - Infrastructure",
+        "type": "dash-db"
+      }
+    ]
+  },
+  "errors": [],
+  "failures": [],
+  "success": true,
+  "finished_at": "2026-11-19T18:20:11.145892+00:00"
+}

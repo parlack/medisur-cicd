@@ -63,8 +63,8 @@ fi
 
 kubectl kustomize "$root/k8s/app" |
   sed -e "s|ghcr.io/OWNER/medisur-cicd:TAG|$image|g" \
-      -e "s|GIT_SHA_PLACEHOLDER|$git_sha|g" \
-      -e "s|VERSION_PLACEHOLDER|$version|g" > "$work/release.yaml"
+      -e "s|GIT_SHA_PLACEHOLDER|'$git_sha'|g" \
+      -e "s|VERSION_PLACEHOLDER|'$version'|g" > "$work/release.yaml"
 # Server dry-run verifies authorization/admission without storing a release.
 "${kube[@]}" apply --dry-run=server -f "$work/release.yaml" >/dev/null
 changed=1

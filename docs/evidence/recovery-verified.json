@@ -1,0 +1,454 @@
+{
+  "started_utc": "2026-11-19T18:23:11.242544+00:00",
+  "namespace": "medisur",
+  "expected_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+  "mode": "local_kubectl_demo",
+  "mutations": [
+    {
+      "action": "delete_one_pod",
+      "target": {
+        "name": "medisur-7c56fdf88b-c55xg",
+        "uid": "fe9c7c20-f589-43c9-9c82-3015280a3ff0",
+        "ready": true,
+        "terminating": false
+      }
+    },
+    {
+      "action": "rollback",
+      "to_revision": 1
+    },
+    {
+      "action": "restore",
+      "to_revision": 2
+    }
+  ],
+  "status": "passed",
+  "limitations": [
+    "Single-node SQLite PVC: no node-availability or database rollback proof.",
+    "Pod deletion replaces a UID; it does not imply restartCount increased.",
+    "HTTP samples measure the laptop tunnel path, not all client paths.",
+    "Readiness polling has two-second resolution; timing includes API latency."
+  ],
+  "jenkins": {
+    "number": 3,
+    "building": false,
+    "result": "SUCCESS"
+  },
+  "initial_http": {
+    "ready": {
+      "status": "ready"
+    },
+    "version": {
+      "build_date": "2026-11-19T18:18:01Z",
+      "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+      "version": "0.1.0-f04534bb54d0"
+    }
+  },
+  "api_server": "https://52.151.192.168:16443",
+  "before": {
+    "uid": "1900e289-4c7f-4753-9be0-f3129997ca52",
+    "revision": 2,
+    "generation": 2,
+    "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+    "images": [
+      "ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-f04534bb54d0"
+    ],
+    "ready_replicas": 2,
+    "available_replicas": 2
+  },
+  "before_pods": [
+    {
+      "name": "medisur-7c56fdf88b-c55xg",
+      "uid": "fe9c7c20-f589-43c9-9c82-3015280a3ff0",
+      "ready": true,
+      "terminating": false
+    },
+    {
+      "name": "medisur-7c56fdf88b-sfsh4",
+      "uid": "cdd00db9-8a19-435f-8613-3e581749aa81",
+      "ready": true,
+      "terminating": false
+    }
+  ],
+  "http": {
+    "interval_s": 0.5,
+    "max_requests": 200,
+    "max_duration_s": 120,
+    "samples": [
+      {
+        "elapsed_s": 0.0,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2219.16
+      },
+      {
+        "elapsed_s": 2.219,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2169.15
+      },
+      {
+        "elapsed_s": 4.389,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2183.51
+      },
+      {
+        "elapsed_s": 6.572,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2303.89
+      },
+      {
+        "elapsed_s": 8.876,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2193.18
+      },
+      {
+        "elapsed_s": 11.069,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2186.1
+      },
+      {
+        "elapsed_s": 13.255,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2248.68
+      },
+      {
+        "elapsed_s": 15.504,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2314.78
+      },
+      {
+        "elapsed_s": 17.819,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2204.68
+      },
+      {
+        "elapsed_s": 20.024,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2299.41
+      },
+      {
+        "elapsed_s": 22.323,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2234.64
+      },
+      {
+        "elapsed_s": 24.558,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2339.07
+      },
+      {
+        "elapsed_s": 26.897,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2162.31
+      },
+      {
+        "elapsed_s": 29.059,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2204.18
+      },
+      {
+        "elapsed_s": 31.263,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2346.92
+      },
+      {
+        "elapsed_s": 33.61,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2273.65
+      },
+      {
+        "elapsed_s": 35.884,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2580.02
+      },
+      {
+        "elapsed_s": 38.464,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 3308.36
+      },
+      {
+        "elapsed_s": 41.773,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2523.28
+      },
+      {
+        "elapsed_s": 44.296,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2309.79
+      },
+      {
+        "elapsed_s": 46.606,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2336.18
+      },
+      {
+        "elapsed_s": 48.942,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2467.26
+      },
+      {
+        "elapsed_s": 51.409,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2349.48
+      },
+      {
+        "elapsed_s": 53.759,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2316.4
+      },
+      {
+        "elapsed_s": 56.075,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2214.75
+      },
+      {
+        "elapsed_s": 58.29,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2190.84
+      },
+      {
+        "elapsed_s": 60.481,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2230.81
+      },
+      {
+        "elapsed_s": 62.712,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2293.15
+      },
+      {
+        "elapsed_s": 65.005,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2241.49
+      },
+      {
+        "elapsed_s": 67.246,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2294.77
+      },
+      {
+        "elapsed_s": 69.541,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2368.61
+      },
+      {
+        "elapsed_s": 71.91,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2226.88
+      },
+      {
+        "elapsed_s": 74.137,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2341.52
+      },
+      {
+        "elapsed_s": 76.478,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2409.63
+      },
+      {
+        "elapsed_s": 78.888,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2292.2
+      },
+      {
+        "elapsed_s": 81.18,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2571.2
+      },
+      {
+        "elapsed_s": 83.752,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2370.3
+      },
+      {
+        "elapsed_s": 86.122,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2492.62
+      },
+      {
+        "elapsed_s": 88.615,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2647.62
+      },
+      {
+        "elapsed_s": 91.262,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 3239.4
+      },
+      {
+        "elapsed_s": 94.502,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2418.14
+      },
+      {
+        "elapsed_s": 96.92,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2414.07
+      },
+      {
+        "elapsed_s": 99.334,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2341.46
+      },
+      {
+        "elapsed_s": 101.675,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2344.17
+      },
+      {
+        "elapsed_s": 104.02,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2633.83
+      },
+      {
+        "elapsed_s": 106.654,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2562.07
+      },
+      {
+        "elapsed_s": 109.216,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2318.29
+      },
+      {
+        "elapsed_s": 111.534,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2305.23
+      },
+      {
+        "elapsed_s": 113.839,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2446.95
+      },
+      {
+        "elapsed_s": 116.286,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2277.27
+      },
+      {
+        "elapsed_s": 118.564,
+        "success": true,
+        "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+        "latency_ms": 2377.75
+      }
+    ],
+    "requests": 51,
+    "successes": 51,
+    "failures": 0
+  },
+  "recovery": {
+    "seconds_to_two_ready": 21.623,
+    "after_pods": [
+      {
+        "name": "medisur-7c56fdf88b-pplqh",
+        "uid": "2c1c7e64-cf84-4bf3-93e7-c38da58cfda8",
+        "ready": true,
+        "terminating": false
+      },
+      {
+        "name": "medisur-7c56fdf88b-sfsh4",
+        "uid": "cdd00db9-8a19-435f-8613-3e581749aa81",
+        "ready": true,
+        "terminating": false
+      }
+    ]
+  },
+  "rollback": {
+    "uid": "1900e289-4c7f-4753-9be0-f3129997ca52",
+    "revision": 3,
+    "generation": 3,
+    "sha": "6fc0a30fbeba3e19127b868abbcf28d3a3854fff",
+    "images": [
+      "ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-6fc0a30fbeba"
+    ],
+    "ready_replicas": 2,
+    "available_replicas": 2,
+    "seconds_to_ready": 46.206,
+    "http_version": {
+      "build_date": "2026-11-19T18:13:50Z",
+      "git_sha": "6fc0a30fbeba3e19127b868abbcf28d3a3854fff",
+      "version": "0.1.0-6fc0a30fbeba"
+    }
+  },
+  "restored": {
+    "uid": "1900e289-4c7f-4753-9be0-f3129997ca52",
+    "revision": 4,
+    "generation": 4,
+    "sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+    "images": [
+      "ghcr.io/sergiomultimedios/medisur-cicd:0.1.0-f04534bb54d0"
+    ],
+    "ready_replicas": 2,
+    "available_replicas": 2,
+    "pods": [
+      {
+        "name": "medisur-7c56fdf88b-ndjjl",
+        "uid": "8d4a8b26-7338-461a-9d54-d0925f010687",
+        "ready": true,
+        "terminating": false
+      },
+      {
+        "name": "medisur-7c56fdf88b-zvn6h",
+        "uid": "2e91eecf-40b4-449d-853a-4181ed6600ab",
+        "ready": true,
+        "terminating": false
+      }
+    ],
+    "http_version": {
+      "build_date": "2026-11-19T18:18:01Z",
+      "git_sha": "f04534bb54d0a16472ea97009fcebc409e43fb8c",
+      "version": "0.1.0-f04534bb54d0"
+    }
+  },
+  "finished_utc": "2026-11-19T18:27:03.766555+00:00"
+}

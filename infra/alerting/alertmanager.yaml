@@ -1,0 +1,28 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: private-github
+  group_by: [alertname, instance, namespace, pod]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - receiver: private-github
+      matchers: ['evidence="TEST"']
+      group_wait: 5s
+      group_interval: 10s
+      repeat_interval: 4h
+
+receivers:
+  - name: private-github
+    webhook_configs:
+      - url: http://alert-relay:8080/alerts
+        send_resolved: true
+        max_alerts: 0
+        timeout: 60s
+        http_config:
+          follow_redirects: false
+          authorization:
+            type: Bearer
+            credentials_file: /run/secrets/alert-relay-secret

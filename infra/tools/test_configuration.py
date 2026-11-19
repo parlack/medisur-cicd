@@ -63,11 +63,12 @@ class ConfigurationTests(unittest.TestCase):
         for secret in self.compose["secrets"].values():
             self.assertIn("file", secret)
 
-    def test_retention_and_no_outbound_alerts(self):
+    def test_retention_and_authorized_internal_alert_receiver(self):
         command = self.compose["services"]["prometheus"]["command"]
         self.assertIn("--storage.tsdb.retention.time=15d", command)
         self.assertIn("--storage.tsdb.retention.size=4GB", command)
-        self.assertNotIn("alerting", self.prometheus)
+        receiver = self.prometheus['alerting']['alertmanagers'][0]['static_configs'][0]['targets']
+        self.assertEqual(receiver, ['alertmanager:9093'])
         self.assertNotIn("remote_write", self.prometheus)
 
     def test_per_pod_discovery_and_cadvisor(self):
