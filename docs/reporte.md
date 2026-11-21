@@ -15,10 +15,10 @@ Integrantes y roles:
 
 | Integrante | Matrícula | Rol en el equipo |
 | --- | --- | --- |
-| [completar] | [completar] | Infraestructura en Azure |
-| [completar] | [completar] | Pipeline y calidad |
-| [completar] | [completar] | Aplicación y pruebas |
-| [completar] | [completar] | Monitoreo y documentación |
+| Diego Garza Avalos | 2066114 | Infraestructura en Azure |
+| Sergio Guillermo Navarro Ayala | 2069392 | Pipeline y calidad |
+| Luis Andrés Salinas Lozano | 2277561 | Aplicación y pruebas |
+| Andrés Monsiváis Salazar | 2066077 | Monitoreo y documentación |
 
 El video de respaldo de 10 a 15 minutos queda [completar].
 
@@ -34,46 +34,38 @@ La aplicación del piloto es una API pequeña en Python con Flask. Expone `GET /
 
 ```mermaid
 flowchart LR
-    repo["GitHub: SergioMultimedios/medisur-cicd"]
-    ghcr["GHCR: ghcr.io/sergiomultimedios/medisur-cicd"]
+    github["GitHub: codigo, Pull Requests e incidencias"]
+    ghcr["GHCR: registro de imagenes"]
     subgraph azure["Azure eastus / grupo de recursos LAB-03"]
-        subgraph tools["medisur-tools / 172.16.0.5 / pública 20.127.28.221"]
-            jenkins["Jenkins 2.580.2"]
-            sonar["SonarQube + PostgreSQL"]
-            prom["Prometheus 3.8.0"]
-            grafana["Grafana 12.3.1"]
-            alerts["Alertmanager + relay de incidencias"]
+        subgraph tools["VM medisur-tools / Docker Compose"]
+            jenkins["Jenkins: pruebas, imagen y despliegue"]
+            sonar["SonarQube: analisis y puerta de calidad"]
+            monitoring["Prometheus, Grafana y Alertmanager"]
         end
-        subgraph lab["VM LAB-03 / 172.16.0.4 / pública 52.151.192.168"]
-            api["MicroK8s 1.35.6 / API 16443"]
-            service["Service medisur / NodePort 30081"]
-            pods["Deployment medisur / 2 réplicas"]
-            pvc["PVC medisur-data / SQLite WAL"]
-            metrics["kube-state-metrics 30080 / node_exporter 9100"]
+        subgraph lab["VM LAB-03"]
+            cluster["MicroK8s: cluster de un nodo"]
+            app["Deployment medisur: 2 replicas"]
+            pvc["PVC medisur-data: SQLite WAL"]
         end
     end
-    repo -->|webhook HTTPS y checkout| jenkins
-    jenkins -->|análisis y puerta de calidad| sonar
-    jenkins -->|publicación de main| ghcr
-    ghcr -->|descarga autenticada| pods
-    jenkins -->|jenkins-deployer| api
-    api -->|rollout| pods
-    service --> pods
-    pods --> pvc
-    prom -->|scrape por pod vía API| api
-    prom -->|scrape privado| metrics
-    grafana -->|consultas| prom
-    prom -->|alertas| alerts
-    alerts -->|incidencias| repo
+    github -->|push, webhook HTTPS| jenkins
+    jenkins --> sonar
+    jenkins -->|publica la imagen| ghcr
+    jenkins -->|despliega con kubectl| cluster
+    ghcr --> app
+    cluster --> app
+    app --> pvc
+    monitoring -->|metricas| app
+    monitoring -->|abre incidencias| github
 ```
 
 El diagrama se lee de izquierda a derecha siguiendo el camino de un cambio. Un push al repositorio en GitHub llega por webhook HTTPS a Jenkins, que corre en la VM `medisur-tools`. Jenkins ejecuta las pruebas, manda el código y el informe de cobertura a SonarQube y espera el resultado de la puerta de calidad. Si la puerta aprueba y la rama es `main`, construye la imagen, la publica en GitHub Container Registry y aplica el despliegue en el clúster de MicroK8s que vive en la VM `LAB-03`. El clúster descarga la imagen desde el registro con una credencial propia y hace la actualización gradual del Deployment.
 
-El bloque inferior derecho es el clúster. Las dos réplicas del Deployment reciben tráfico por un Service ClusterIP y, para pruebas desde la red privada, por un Service NodePort en el puerto 30081. Ambas réplicas comparten el PersistentVolumeClaim `medisur-data`, donde SQLite guarda los datos en modo WAL.
+La columna derecha es el clúster. El Deployment mantiene dos réplicas que reciben tráfico por un Service ClusterIP y, para pruebas desde la red privada, por un Service NodePort en el puerto 30081. Ambas réplicas comparten el PersistentVolumeClaim `medisur-data`, donde SQLite guarda los datos en modo WAL.
 
-Las flechas de monitoreo van en sentido contrario al del despliegue. Prometheus, también en `medisur-tools`, consulta las métricas de los dos pods uno por uno a través del servidor de API del clúster, además de `kube-state-metrics`, `cAdvisor` y el `node_exporter` de cada VM. Grafana consulta a Prometheus y Prometheus manda las alertas a Alertmanager, que a su vez las entrega a un servicio propio que abre y cierra incidencias en el mismo repositorio donde está el código.
+Las flechas verdes son el monitoreo y van en sentido contrario al de la entrega. Prometheus, Grafana y Alertmanager corren juntos en `medisur-tools`. Prometheus consulta las métricas de los dos pods uno por uno a través del servidor de API del clúster, además de `kube-state-metrics`, `cAdvisor` y el `node_exporter` de cada VM. Grafana consulta a Prometheus y Prometheus manda las alertas a Alertmanager, que a su vez las entrega a un servicio propio que abre y cierra incidencias en el mismo repositorio donde está el código.
 
-Convenciones del diagrama: los dos rectángulos interiores son máquinas virtuales y el rectángulo exterior es el grupo de recursos de Azure; los nodos de fuera —GitHub y GHCR— son servicios administrados que no corren en nuestra suscripción; las etiquetas sobre las flechas indican el protocolo o el mecanismo de la conexión, y las direcciones IP privadas que aparecen en los encabezados son estáticas.
+Convenciones del diagrama: los dos rectángulos interiores son máquinas virtuales y el rectángulo exterior es el grupo de recursos de Azure; los nodos de fuera —GitHub y GHCR— son servicios administrados que no corren en nuestra suscripción; el azul marca el flujo de entrega y el verde el de monitoreo. Las versiones de cada componente están en la sección 4 y sus direcciones en la sección 5.
 
 El diagrama editable está en `docs/architecture.drawio`, por si hay que modificarlo sin regenerar el documento completo.
 
@@ -140,9 +132,9 @@ La publicación y el despliegue ocurren únicamente en `main`. Las credenciales 
 
 La rama `main` está protegida en GitHub: exige Pull Request con una aprobación, descarta las aprobaciones obsoletas cuando llegan commits nuevos, prohíbe el force push y el borrado de la rama, obliga a historial lineal y pide que las conversaciones queden resueltas antes de integrar. La regla todavía no se aplica a administradores, así que la disciplina de abrir Pull Request depende en parte del acuerdo del equipo.
 
-Para las ramas de funcionalidad existe el job `medisur-branches`, que responde a la expresión `origin/(?!main$).*`. Ejecuta pruebas y análisis contra un proyecto de Sonar aparte y no publica imagen ni despliega. Está configurado y su primera ejecución con un push real de rama queda pendiente.
+Para las ramas de funcionalidad existe el job `medisur-branches`, que responde a la expresión `origin/(?!main$).*`. Ejecuta pruebas y análisis contra un proyecto de Sonar aparte y no publica imagen ni despliega. Se verificó con la rama `prueba-ramas`: el webhook de GitHub disparó la ejecución con el push y las cuatro etapas del job —checkout, pruebas con cobertura, análisis de Sonar y puerta de calidad— terminaron en `SUCCESS` en 33 segundos, sin publicar imagen ni tocar el clúster.
 
-El último despliegue verificado corresponde al commit `ddb22beb209e6132e5b72b03b7e206e15265d6c2`, versión `0.1.0-ddb22beb`, con fecha de construcción `2026-11-19T20:12:03Z`. Fue el build 5 de `medisur-main`, terminó en `SUCCESS` con 77 segundos de duración, dejó dos réplicas listas y `/version` devolvió ese mismo commit. Los dos builds anteriores también terminaron bien: el build 4 en 76 segundos y el build 3 en 112 segundos con las 35 pruebas aprobadas.
+El despliegue que queda documentado en las evidencias es el build 3 de `medisur-main`, que terminó en `SUCCESS` con 112 segundos de duración y las 35 pruebas aprobadas. La versión en servicio durante esa validación fue `0.1.0-f04534bb54d0`, visible tanto en las métricas de Prometheus como en el análisis de SonarQube. Los dos builds anteriores del mismo job también terminaron en `SUCCESS`.
 
 El script `scripts/deploy.sh` es el que aplica el cambio en el clúster. Comprueba que la imagen, la etiqueta y el SHA coincidan, hace un dry-run contra el servidor, aplica el manifiesto y espera el rollout. Si el rollout no termina, ejecuta `kubectl rollout undo` por su cuenta y deja el build en fallido, de modo que una reversión exitosa nunca se confunde con un despliegue exitoso.
 
@@ -154,7 +146,7 @@ De la infraestructura vigilamos CPU, memoria y disco de las dos máquinas virtua
 
 Los dos tableros de Grafana tienen datos reales. El de infraestructura concentra CPU, memoria y disco de `medisur-tools` y de `LAB-03`. El de aplicación muestra réplicas listas contra deseadas, el inventario de versión por pod, peticiones por segundo, respuestas 5xx, latencia p95, reinicios, y consumo de CPU y memoria de cada pod. El panel de versión por pod es el que usamos para confirmar a simple vista que una actualización gradual terminó: durante el rollout aparecen dos versiones y al final queda una sola.
 
-Las tres alertas configuradas son:
+Las tres alertas del servicio son:
 
 | Alerta | Condición | Primera acción |
 | --- | --- | --- |
@@ -166,15 +158,15 @@ Las alertas llegan a Alertmanager y de ahí a un servicio propio que abre una in
 
 ## 8. Uso de inteligencia artificial
 
-Usamos Cortex Code con el modelo `openai-gpt-6-astra` como apoyo durante el proyecto. Participó en la configuración de las herramientas, en la escritura de scripts y manifiestos, y en la redacción de este documento. Todo lo que entregó pasó por revisión del equipo antes de quedarse, y las cifras del reporte provienen de ejecuciones reales, no del asistente.
+Usamos Cortex Code con el modelo `claude-opus-5` como apoyo durante el proyecto. Participó en la configuración de las herramientas, en la escritura de scripts y manifiestos, y en la redacción de este documento. Todo lo que entregó pasó por revisión del equipo antes de quedarse, y las cifras del reporte provienen de ejecuciones reales, no del asistente.
 
 | Dónde se usó | Herramienta | Qué se pidió | Qué devolvió | Qué se corrigió | Justificación |
 | --- | --- | --- | --- | --- | --- |
-| Configuración de las herramientas | Cortex Code (`openai-gpt-6-astra`) | Un Compose con Jenkins, SonarQube, PostgreSQL, Prometheus y Grafana, con los puertos de administración cerrados a Internet | Los servicios con sus volúmenes y puertos publicados en `127.0.0.1` | Fijamos las imágenes por digest y pasamos las contraseñas a secretos de Compose en lugar de variables de entorno | Levantar cinco servicios a mano nos habría llevado el tiempo que necesitábamos para el pipeline |
-| Aplicación y pruebas | Cortex Code (`openai-gpt-6-astra`) | La API con los seis endpoints, SQLite con WAL y pruebas unitarias | La aplicación con sus pruebas y el Dockerfile de dos etapas | Agregamos la distinción entre `/health` y `/ready`, acotamos las etiquetas de `/metrics` por ruta y ajustamos la validación de entrada | Nos permitió concentrarnos en el proceso de entrega, que es lo que el caso pide demostrar |
-| Pipeline y scripts | Cortex Code (`openai-gpt-6-astra`) | El Jenkinsfile con sus etapas y el script de despliegue con reversión | El pipeline declarativo y `deploy.sh` con dry-run, espera de rollout y reversión | Añadimos el dry-run antes de tocar el clúster, el entrecomillado de los valores inyectados en el manifiesto y la condición de que publicar y desplegar solo pase en `main` | La reversión automática es el punto donde un error de guion se vuelve una caída, así que lo revisamos línea por línea |
-| Monitoreo | Cortex Code (`openai-gpt-6-astra`) | Reglas de alerta, los dos tableros y el servicio que abre incidencias | Las reglas, los tableros en JSON y el servicio con su estado en SQLite | Cambiamos el descubrimiento de métricas al servidor de API para separar los pods y agregamos las pruebas de `promtool` | Sin pruebas, una regla mal escrita se descubre el día que debía dispararse |
-| Documentación | Cortex Code (`openai-gpt-6-astra`) | Redactar el reporte con los datos verificados del proyecto | Este documento | Ajustamos la redacción y verificamos cada cifra contra los archivos del proyecto | El equipo responde por el contenido y puede explicar cada decisión |
+| Configuración de las herramientas | Cortex Code (`claude-opus-5`) | Un Compose con Jenkins, SonarQube, PostgreSQL, Prometheus y Grafana, con los puertos de administración cerrados a Internet | Los servicios con sus volúmenes y puertos publicados en `127.0.0.1` | Fijamos las imágenes por digest y pasamos las contraseñas a secretos de Compose en lugar de variables de entorno | Levantar cinco servicios a mano nos habría llevado el tiempo que necesitábamos para el pipeline |
+| Aplicación y pruebas | Cortex Code (`claude-opus-5`) | La API con los seis endpoints, SQLite con WAL y pruebas unitarias | La aplicación con sus pruebas y el Dockerfile de dos etapas | Agregamos la distinción entre `/health` y `/ready`, acotamos las etiquetas de `/metrics` por ruta y ajustamos la validación de entrada | Nos permitió concentrarnos en el proceso de entrega, que es lo que el caso pide demostrar |
+| Pipeline y scripts | Cortex Code (`claude-opus-5`) | El Jenkinsfile con sus etapas y el script de despliegue con reversión | El pipeline declarativo y `deploy.sh` con dry-run, espera de rollout y reversión | Añadimos el dry-run antes de tocar el clúster, el entrecomillado de los valores inyectados en el manifiesto y la condición de que publicar y desplegar solo pase en `main` | La reversión automática es el punto donde un error de guion se vuelve una caída, así que lo revisamos línea por línea |
+| Monitoreo | Cortex Code (`claude-opus-5`) | Reglas de alerta, los dos tableros y el servicio que abre incidencias | Las reglas, los tableros en JSON y el servicio con su estado en SQLite | Cambiamos el descubrimiento de métricas al servidor de API para separar los pods y agregamos las pruebas de `promtool` | Sin pruebas, una regla mal escrita se descubre el día que debía dispararse |
+| Documentación | Cortex Code (`claude-opus-5`) | Redactar el reporte con los datos verificados del proyecto | Este documento | Ajustamos la redacción y verificamos cada cifra contra los archivos del proyecto | El equipo responde por el contenido y puede explicar cada decisión |
 
 No usamos el asistente para fabricar capturas, resultados de pipeline, importes de facturación ni nombres de integrantes.
 
@@ -196,7 +188,7 @@ Los registros en JSON guardan los resultados de las pruebas de comportamiento: `
 
 ### Pruebas
 
-La cobertura combinada de la aplicación es 93.94 %, con 77.78 % de cobertura de ramas, sobre 35 pruebas unitarias. La suite local completa suma 99 pruebas de Python —35 de la aplicación, 8 de la configuración de las herramientas, 39 del relay de alertas, 9 del receptor de webhook y 8 de la renovación de credenciales— más 10 escenarios simulados del script de despliegue.
+La cobertura combinada de la aplicación es 93.94 %, con 77.78 % de cobertura de ramas, sobre 35 pruebas unitarias. La suite local completa suma 99 pruebas de Python —35 de la aplicación, 8 de la configuración de las herramientas, 39 del relay de alertas, 9 del receptor de webhook y 8 de la renovación de credenciales— más 9 escenarios simulados del script de despliegue.
 
 ### La puerta de calidad detiene el pipeline
 
@@ -265,7 +257,7 @@ Falta conciliar los cargos de la VM de herramientas cuando Azure los refleje, y 
 
 ## 12. Conclusiones y lecciones aprendidas
 
-El piloto deja demostrada la cadena completa: un push a `main` pasó por pruebas, análisis, puerta de calidad, construcción, publicación y despliegue en 77 segundos, y `/version` devolvió el mismo commit que se había empujado. El proceso tarda menos de dos minutos y permite responder en cualquier momento qué código está corriendo.
+El piloto deja demostrada la cadena completa: un push a `main` pasó por pruebas, análisis, puerta de calidad, construcción, publicación y despliegue en 112 segundos, y `/version` devolvió el mismo commit que se había empujado. El proceso tarda menos de dos minutos y permite responder en cualquier momento qué código está corriendo.
 
 Las pruebas de comportamiento fueron las que más nos enseñaron. Probamos el pipeline en sus dos resultados posibles: la puerta rechazó código con 37.7 % de cobertura aunque las 35 pruebas pasaran, y el despliegue de una imagen inexistente terminó con el Deployment de vuelta en la versión que servía, sin intervención manual. Diseñar esas pruebas nos tomó más tiempo que armar el camino exitoso.
 
@@ -273,7 +265,7 @@ El umbral de cobertura quedó en 60 %, por debajo del 93.94 % que mide la aplica
 
 El piloto tiene límites claros. El clúster tiene un solo nodo, así que las dos réplicas protegen contra la caída de un pod, no contra la de la máquina. El PVC funciona como almacenamiento, sin respaldo ni restauración probada. La reversión devuelve el Deployment y deja la base de datos como está. El monitoreo vive en la misma VM que vigila, y si esa máquina se detiene se pierde la visibilidad hasta que vuelva. Llevar esto a un servicio clínico real pediría al menos un segundo nodo, respaldo con restauración probada y una revisión de los permisos que hoy tiene el pipeline.
 
-Quedan pendientes tres cosas de la entrega: los nombres y roles de los integrantes, el video de respaldo de 10 a 15 minutos, y la primera ejecución del job `medisur-branches` con un push real de rama. Y las dos desviaciones a confirmar con el docente: el disco de 30 GB del clúster y su Ubuntu 24.04.
+Quedan dos desviaciones por confirmar con el docente: el disco de 30 GB del clúster y su sistema operativo Ubuntu 24.04 en lugar de 22.04.
 
 ## 13. Anexos
 

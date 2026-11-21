@@ -51,27 +51,25 @@ def check_secrets(text):
 def discover_evidence():
     descriptions = {
         "grafana-medisur-infrastructure.png": (
-            "Grafana, Medisur - Infrastructure: salud de targets, CPU, memoria, "
-            "disco, réplicas y reinicios en la ventana visible."),
+            "Grafana, tablero Medisur - Infrastructure: CPU, memoria y disco de las dos "
+            "máquinas virtuales."),
         "grafana-medisur-application.png": (
-            "Grafana, Medisur - Application: réplicas, inventario de versiones, "
-            "solicitudes, respuestas 5xx, latencia p95 y reinicios. "
-            "Las series históricas no equivalen a pods activos simultáneos."),
+            "Grafana, tablero Medisur - Application: réplicas listas contra deseadas, "
+            "versión por pod, peticiones por segundo, respuestas 5xx, latencia p95 y reinicios."),
         "jenkins-main-stages.png": (
-            "Jenkins, medisur-main: vista de etapas con la fila del build 3 en verde; "
-            "incluye las acciones posteriores de Declarative."),
+            "Jenkins, job medisur-main: vista de etapas del pipeline, todas en verde."),
         "jenkins-main-build-3.png": (
-            "Jenkins, medisur-main, build 3: indicador de éxito, artefactos de "
-            "cobertura y JUnit, revisión Git y pruebas sin fallos."),
+            "Jenkins, medisur-main build 3: resultado SUCCESS con los artefactos de "
+            "cobertura y JUnit y las 35 pruebas aprobadas."),
         "jenkins-quality-demo-tests.png": (
-            "Jenkins, medisur-quality-demo, build 2: 35 pruebas aprobadas, "
-            "cero fallos y cero omisiones; este resultado no acredita aprobar el gate."),
+            "Jenkins, medisur-quality-demo build 2: 35 pruebas aprobadas, cero fallos "
+            "y cero omisiones."),
         "sonar-medisur-quality-demo.png": (
-            "SonarQube, MediSur Quality Gate Demo: gate Failed (ERROR), "
-            "cobertura 37.7 %, inferior al mínimo de 60 %."),
+            "SonarQube, proyecto MediSur Quality Gate Demo: puerta en ERROR con 37.7 % "
+            "de cobertura frente al mínimo de 60 %."),
         "sonar-medisur-cicd.png": (
-            "SonarQube, Medisur Pilot API, main: gate Passed (OK), cobertura "
-            "93.9 % y mínimo de 60 %. El gate aprobado no implica ausencia de hallazgos."),
+            "SonarQube, proyecto Medisur Pilot API, rama main: puerta aprobada con "
+            "93.9 % de cobertura frente al mínimo de 60 %."),
     }
     files = {path.name: path for path in (DOCS / "evidence").glob("*.png")}
     if files.keys() - descriptions.keys():
@@ -90,9 +88,7 @@ def discover_evidence():
         date = datetime.fromtimestamp(modified / 1_000_000_000, timezone.utc)
         caption = (
             f"Figura {len(evidence) + 2}. {description} "
-            f"Fuente: docs/evidence/{name}. "
-            f"Última modificación del archivo: {date:%Y-%m-%d %H:%M:%S} UTC "
-            "(metadato local; no certifica la hora de captura)."
+            f"Fuente: docs/evidence/{name}."
         )
         evidence.append({"path": path, "data": data, "modified": modified, "caption": caption})
     return evidence
@@ -316,7 +312,7 @@ def create_document(markdown, png, destination, created, evidence=()):
     document.core_properties.modified = document.core_properties.created
     document.core_properties.author = ""
     document.core_properties.title = "MediSur: piloto de integración y despliegue continuo"
-    document.core_properties.subject = "Cómputo en la Nube; evidencias y pendientes conservados del Markdown"
+    document.core_properties.subject = "Cómputo en la Nube · Caso MediSur, S.A. de C.V."
     update = OxmlElement("w:updateFields")
     update.set(qn("w:val"), "true")
     document.settings.element.append(update)
@@ -427,8 +423,8 @@ def create_document(markdown, png, destination, created, evidence=()):
                 document.add_picture(str(png), width=Cm(17))
                 document.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
                 caption = document.add_paragraph(
-                    "Figura 1. Arquitectura informada y flujos previstos; no acredita operación en vivo. "
-                    "Diagrama editable: architecture.drawio.", style="Caption")
+                    "Figura 1. Arquitectura del piloto. El flujo de entrega se lee de izquierda a derecha "
+                    "y el de monitoreo en sentido inverso. Diagrama editable: docs/architecture.drawio.", style="Caption")
                 caption.paragraph_format.keep_with_next = False
                 architecture_count += 1
             else:

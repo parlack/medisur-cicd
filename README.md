@@ -72,7 +72,7 @@ El segundo comando crea o reutiliza un volumen nombrado, que sobrevive al borrad
 
 `Jenkinsfile` ejecuta pruebas, análisis Sonar, quality gate, construcción de imagen y publicación en GHCR, y despliega únicamente desde `main`. Requiere un ejecutor Linux con la etiqueta `medisur-ci` y Docker, Bash, kubectl, curl y jq disponibles. Usa las credenciales `ghcr`, `sonar-token`, `sonarqube-webhook-secret` y `medisur-kubeconfig`, además de la credencial de checkout. La instalación de SonarQube se llama `SonarQube` tanto en el `Jenkinsfile` como en la configuración JCasC. El gate exige cobertura mínima de 60 %.
 
-El job `medisur-branches` cubre las ramas distintas de `main` con el regex `origin/(?!main$).*`, un proyecto Sonar separado y sin publicación ni despliegue. Está configurado mediante `scripts/configure-feature-ci.py`.
+El job `medisur-branches` cubre las ramas distintas de `main` con el regex `origin/(?!main$).*`, un proyecto Sonar separado y sin publicación ni despliegue. Está configurado mediante `scripts/configure-feature-ci.py`. Se verificó contra la rama `prueba-ramas`: el webhook disparó la ejecución con el push y las cuatro etapas —checkout, pruebas con cobertura, análisis de Sonar y puerta de calidad— terminaron en verde en 33 segundos.
 
 Jenkins corre la versión 2.580.2 con 85 plugins fijados en `infra/tools/jenkins/plugins.txt`; el cotejo del controlador en ejecución los reporta activos y con las versiones exactas del manifiesto.
 
@@ -232,12 +232,10 @@ docs/                     Reporte, diagramas y evidencias
 - [`docs/live-validation.json`](docs/live-validation.json): validación de pruebas, Sonar y monitoreo.
 - [`docs/evidence/`](docs/evidence/): capturas de Jenkins, SonarQube y Grafana.
 
-La documentación y la preparación se asistieron con Cortex Code, modelo `openai-gpt-6-astra`. La [declaración de uso de IA](docs/reporte.md#8-declaración-de-uso-de-inteligencia-artificial) delimita esa asistencia frente a la revisión humana.
+La documentación y la preparación se asistieron con Cortex Code, modelo `claude-opus-5`. La [declaración de uso de IA](docs/reporte.md#8-declaración-de-uso-de-inteligencia-artificial) delimita esa asistencia frente a la revisión humana.
 
 ## Pendientes
 
-- Nombres y roles de los integrantes del equipo.
 - Video de respaldo de 10 a 15 minutos.
-- Primera ejecución real del job de ramas `medisur-branches` con un push de rama.
 - Confirmación docente del disco de 30 GB del clúster y de Ubuntu 24.04.
 - Conciliación final de costos, sujeta a la latencia de facturación de Azure.
