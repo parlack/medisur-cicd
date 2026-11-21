@@ -26,7 +26,7 @@ def create_app(config=None):
         BUILD_DATE=os.getenv("BUILD_DATE", "unknown"),
         MAX_CONTENT_LENGTH=16 * 1024,
     )
-    if config:
+    if config and config:
         application.config.update(config)
     busy_timeout_ms = int(application.config["SQLITE_BUSY_TIMEOUT_MS"])
     if busy_timeout_ms < 1:
